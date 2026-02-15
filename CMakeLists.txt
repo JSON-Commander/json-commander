@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.12)
 project(commander VERSION 0.1.0 LANGUAGES C CXX)
 
 option(commander_BUILD_TESTING "Build the commander tests" ON)
+option(commander_BUILD_EXAMPLES "Build the commander examples" ON)
 set(commander_CXX_STANDARD 20 CACHE STRING "C++ standard for commander")
 
 include(GNUInstallDirs)
@@ -21,6 +22,10 @@ if(commander_BUILD_TESTING)
   if(BUILD_TESTING)
     add_subdirectory(commander_testing)
   endif()
+endif()
+
+if(commander_BUILD_EXAMPLES)
+  add_subdirectory(examples)
 endif()
 
 install(EXPORT commander_EXPORTS
