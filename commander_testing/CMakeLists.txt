@@ -18,3 +18,4 @@ endmacro()
 
 commander_add_test(metaschema)
 commander_add_test(model)
+commander_add_test(schema_loader)
