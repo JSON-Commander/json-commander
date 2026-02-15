@@ -10,4 +10,5 @@ macro(commander_add_example example_name)
     CXX_STANDARD ${commander_CXX_STANDARD})
 endmacro()
 
-commander_add_example(greet)
+add_subdirectory(greet)
+add_subdirectory(serve)

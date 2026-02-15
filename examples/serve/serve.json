@@ -1,0 +1,38 @@
+{
+  "name": "serve",
+  "doc": ["A static file server."],
+  "version": "0.1.0",
+  "args": [
+    {
+      "kind": "option",
+      "names": ["port", "p"],
+      "doc": ["Port to listen on."],
+      "type": "int",
+      "default": 8080,
+      "env": "SERVE_PORT",
+      "docv": "PORT"
+    },
+    {
+      "kind": "option",
+      "names": ["host", "H"],
+      "doc": ["Host address to bind."],
+      "type": "string",
+      "default": "localhost",
+      "env": "SERVE_HOST",
+      "docv": "ADDR"
+    },
+    {
+      "kind": "flag",
+      "names": ["verbose", "v"],
+      "doc": ["Enable verbose logging."],
+      "env": "SERVE_VERBOSE"
+    },
+    {
+      "kind": "positional",
+      "name": "dir",
+      "doc": ["Directory to serve."],
+      "type": "string",
+      "default": "."
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+commander_add_example(greet)
