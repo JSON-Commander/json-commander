@@ -1,0 +1,591 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://commander.dev/schema/commander.schema.json",
+  "title": "Commander CLI Schema",
+  "description": "Metaschema for defining command line interfaces via JSON. Validates user-authored JSON documents that describe command line interfaces, mapping OCaml cmdliner concepts to a declarative JSON representation.",
+  "$ref": "#/$defs/root",
+  "$defs": {
+    "doc_string": {
+      "title": "Documentation Text",
+      "description": "An array of strings representing documentation text. Each element is a line of text. An empty string element creates a paragraph break. This format allows readable multi-line documentation in JSON.",
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "identifier": {
+      "title": "Identifier",
+      "description": "A valid name: starts with a letter, followed by letters, digits, underscores, or hyphens.",
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$",
+      "minLength": 1
+    },
+    "short_name": {
+      "title": "Short Name",
+      "description": "A single alphanumeric character used as a short flag or option name (e.g., 'v' becomes '-v').",
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9]$"
+    },
+    "long_name": {
+      "title": "Long Name",
+      "description": "A multi-character name used as a long flag or option name (e.g., 'verbose' becomes '--verbose').",
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_-]+$",
+      "minLength": 2
+    },
+    "arg_name": {
+      "title": "Argument Name",
+      "description": "Either a short name (single character, e.g., 'v') or a long name (multiple characters, e.g., 'verbose'). Short names produce short flags (-v), long names produce long flags (--verbose).",
+      "oneOf": [
+        { "$ref": "#/$defs/short_name" },
+        { "$ref": "#/$defs/long_name" }
+      ]
+    },
+    "arg_names": {
+      "title": "Argument Name List",
+      "description": "A non-empty array of argument names. Multiple names are aliases for the same argument (e.g., ['verbose', 'v'] means both --verbose and -v are accepted).",
+      "type": "array",
+      "items": { "$ref": "#/$defs/arg_name" },
+      "minItems": 1
+    },
+    "env_binding": {
+      "title": "Environment Variable Binding",
+      "description": "Associates an argument with an environment variable for fallback values. Either a plain variable name string (e.g., 'MYAPP_VERBOSE') or an object with 'var' and optional 'doc' fields.",
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^[A-Z_][A-Z0-9_]*$"
+        },
+        {
+          "type": "object",
+          "required": ["var"],
+          "properties": {
+            "var": {
+              "type": "string",
+              "pattern": "^[A-Z_][A-Z0-9_]*$"
+            },
+            "doc": { "$ref": "#/$defs/doc_string" }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "env_info": {
+      "title": "Environment Variable Documentation",
+      "description": "Documents an environment variable that affects the command. Listed in the ENVIRONMENT section of the man page. Unlike env_binding on arguments, these are documentation-only and do not configure fallback parsing.",
+      "type": "object",
+      "required": ["var"],
+      "properties": {
+        "var": {
+          "type": "string",
+          "pattern": "^[A-Z_][A-Z0-9_]*$"
+        },
+        "doc": { "$ref": "#/$defs/doc_string" }
+      },
+      "additionalProperties": false
+    },
+    "exit_info": {
+      "title": "Exit Code Documentation",
+      "description": "Documents an exit code or range of exit codes. When 'max' is present, it defines a range [code, max]. Listed in the EXIT STATUS section of the man page.",
+      "type": "object",
+      "required": ["code", "doc"],
+      "properties": {
+        "code": {
+          "description": "The exit code value, or the start of a range when 'max' is also specified.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "max": {
+          "description": "When present, defines the end of an exit code range [code, max].",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "doc": { "$ref": "#/$defs/doc_string" }
+      },
+      "additionalProperties": false
+    },
+    "scalar_type": {
+      "title": "Scalar Type",
+      "description": "A scalar value type for arguments. Determines how the argument string is parsed and what JSON type appears in the output configuration.",
+      "type": "string",
+      "enum": ["string", "int", "float", "bool", "enum", "file", "dir", "path"]
+    },
+    "list_type": {
+      "title": "List Type",
+      "description": "A compound type that parses a delimited list of values. For example, 'a,b,c' with separator ',' produces [\"a\", \"b\", \"c\"]. Elements must be scalar types.",
+      "type": "object",
+      "required": ["list"],
+      "properties": {
+        "list": {
+          "type": "object",
+          "required": ["element"],
+          "properties": {
+            "element": { "$ref": "#/$defs/scalar_type" },
+            "separator": {
+              "description": "The delimiter character(s) between list elements. Defaults to ',' if omitted.",
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "pair_type": {
+      "title": "Pair Type",
+      "description": "A compound type that parses two delimited values. For example, 'key=value' with separator '=' produces a two-element structure. Each component must be a scalar type.",
+      "type": "object",
+      "required": ["pair"],
+      "properties": {
+        "pair": {
+          "type": "object",
+          "required": ["first", "second"],
+          "properties": {
+            "first": { "$ref": "#/$defs/scalar_type" },
+            "second": { "$ref": "#/$defs/scalar_type" },
+            "separator": {
+              "description": "The delimiter between the two values. Defaults to ',' if omitted.",
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "triple_type": {
+      "title": "Triple Type",
+      "description": "A compound type that parses three delimited values. For example, '255,128,0' with separator ',' for an RGB color. Each component must be a scalar type.",
+      "type": "object",
+      "required": ["triple"],
+      "properties": {
+        "triple": {
+          "type": "object",
+          "required": ["first", "second", "third"],
+          "properties": {
+            "first": { "$ref": "#/$defs/scalar_type" },
+            "second": { "$ref": "#/$defs/scalar_type" },
+            "third": { "$ref": "#/$defs/scalar_type" },
+            "separator": {
+              "description": "The delimiter between the three values. Defaults to ',' if omitted.",
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "type_spec": {
+      "title": "Type Specification",
+      "description": "Defines the type of a value for options and positional arguments. Can be a scalar type string (e.g., 'string', 'int', 'file') or a compound type object (list, pair, or triple). Compound type elements must be scalar types. For nested structures like lists of pairs, use 'repeated' options instead.",
+      "oneOf": [
+        { "$ref": "#/$defs/scalar_type" },
+        { "$ref": "#/$defs/list_type" },
+        { "$ref": "#/$defs/pair_type" },
+        { "$ref": "#/$defs/triple_type" }
+      ]
+    },
+    "flag": {
+      "title": "Flag Argument",
+      "description": "A boolean presence flag. When the flag appears on the command line, it is true; otherwise false. With 'repeated: true', counts the number of occurrences (e.g., -vvv produces 3).",
+      "type": "object",
+      "required": ["kind", "names", "doc"],
+      "properties": {
+        "kind": { "const": "flag" },
+        "names": { "$ref": "#/$defs/arg_names" },
+        "doc": { "$ref": "#/$defs/doc_string" },
+        "dest": {
+          "description": "Output key name in the runtime configuration. Defaults to the first long name, or the first short name if no long name exists.",
+          "$ref": "#/$defs/identifier"
+        },
+        "env": { "$ref": "#/$defs/env_binding" },
+        "repeated": {
+          "description": "When true, the flag can appear multiple times. Output is an integer count instead of a boolean.",
+          "type": "boolean"
+        },
+        "deprecated": {
+          "description": "Deprecation notice shown when the flag is used.",
+          "type": "string"
+        },
+        "docs": {
+          "description": "Man page section name where this flag is documented (e.g., 'COMMON OPTIONS').",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "flag_group_entry": {
+      "title": "Flag Group Entry",
+      "description": "A single flag within a flag_group. Each entry maps a set of flag names to a specific value. Flags in a group are mutually exclusive.",
+      "type": "object",
+      "required": ["names", "doc", "value"],
+      "properties": {
+        "names": { "$ref": "#/$defs/arg_names" },
+        "doc": { "$ref": "#/$defs/doc_string" },
+        "value": {
+          "description": "The value produced in the output configuration when this flag is selected."
+        }
+      },
+      "additionalProperties": false
+    },
+    "flag_group": {
+      "title": "Flag Group (Variant Flags)",
+      "description": "A group of mutually exclusive flags that select among predefined values (cmdliner's vflag). For example, --quiet/--verbose/--debug selecting a log level. With 'repeated: true', collects all selections into an array.",
+      "type": "object",
+      "required": ["kind", "dest", "doc", "default", "flags"],
+      "properties": {
+        "kind": { "const": "flag_group" },
+        "dest": {
+          "description": "Output key name in the runtime configuration.",
+          "$ref": "#/$defs/identifier"
+        },
+        "doc": { "$ref": "#/$defs/doc_string" },
+        "default": {
+          "description": "Default value when no flag in the group is specified."
+        },
+        "flags": {
+          "description": "The mutually exclusive flags in this group. Must contain at least one entry.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/flag_group_entry" },
+          "minItems": 1
+        },
+        "repeated": {
+          "description": "When true, collects all flag occurrences into an array (cmdliner's vflag_all).",
+          "type": "boolean"
+        },
+        "docs": {
+          "description": "Man page section name where this group is documented.",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "option": {
+      "title": "Option Argument",
+      "description": "A named argument that takes a typed value (e.g., --output FILE, -n 10). The value is parsed according to the specified type. With 'repeated: true', collects all occurrences into an array.",
+      "type": "object",
+      "required": ["kind", "names", "doc", "type"],
+      "properties": {
+        "kind": { "const": "option" },
+        "names": { "$ref": "#/$defs/arg_names" },
+        "doc": { "$ref": "#/$defs/doc_string" },
+        "docv": {
+          "description": "The metavariable shown in help text (e.g., 'FILE' in '--output FILE').",
+          "type": "string"
+        },
+        "type": { "$ref": "#/$defs/type_spec" },
+        "default": {
+          "description": "Default value when the option is not specified."
+        },
+        "required": {
+          "description": "When true, the option must be provided.",
+          "type": "boolean"
+        },
+        "repeated": {
+          "description": "When true, the option can appear multiple times and values are collected into an array.",
+          "type": "boolean"
+        },
+        "choices": {
+          "description": "Valid values when type is 'enum'. The argument is rejected if the value is not in this list.",
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "must_exist": {
+          "description": "When true, validates that the file or directory exists. Only meaningful when type is 'file' or 'dir'.",
+          "type": "boolean"
+        },
+        "dest": {
+          "description": "Output key name in the runtime configuration. Defaults to the first long name, or the first short name if no long name exists.",
+          "$ref": "#/$defs/identifier"
+        },
+        "env": { "$ref": "#/$defs/env_binding" },
+        "docs": {
+          "description": "Man page section name where this option is documented.",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "positional": {
+      "title": "Positional Argument",
+      "description": "An argument identified by position rather than a flag name. Positional arguments are ordered by their position in the 'args' array. At most one positional may have 'repeated: true', and it must be the last positional.",
+      "type": "object",
+      "required": ["kind", "name", "doc", "type"],
+      "properties": {
+        "kind": { "const": "positional" },
+        "name": {
+          "description": "Serves as both the documentation label and the output key in the runtime configuration.",
+          "$ref": "#/$defs/identifier"
+        },
+        "doc": { "$ref": "#/$defs/doc_string" },
+        "docv": {
+          "description": "The metavariable shown in help text (e.g., 'FILE').",
+          "type": "string"
+        },
+        "type": { "$ref": "#/$defs/type_spec" },
+        "default": {
+          "description": "Default value when the argument is not provided."
+        },
+        "required": {
+          "description": "When true, the argument must be provided.",
+          "type": "boolean"
+        },
+        "repeated": {
+          "description": "When true, consumes all remaining positional arguments into an array. Must be the last positional argument.",
+          "type": "boolean"
+        },
+        "must_exist": {
+          "description": "When true, validates that the file or directory exists. Only meaningful when type is 'file' or 'dir'.",
+          "type": "boolean"
+        },
+        "docs": {
+          "description": "Man page section name where this argument is documented.",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "argument": {
+      "title": "Argument",
+      "description": "A command line argument definition. Discriminated on the 'kind' field: 'flag' for boolean flags, 'option' for named typed values, 'positional' for position-based arguments, or 'flag_group' for mutually exclusive variant flags.",
+      "oneOf": [
+        { "$ref": "#/$defs/flag" },
+        { "$ref": "#/$defs/flag_group" },
+        { "$ref": "#/$defs/option" },
+        { "$ref": "#/$defs/positional" }
+      ]
+    },
+    "man_block": {
+      "title": "Man Page Block",
+      "description": "A content block within a man page section. Four kinds: 'paragraph' for body text, 'pre' for preformatted text (code examples), 'label'+'text' for labeled/indented items, and 'noblank' to suppress the blank line before the next block.",
+      "oneOf": [
+        {
+          "title": "Paragraph Block",
+          "description": "A paragraph of body text.",
+          "type": "object",
+          "required": ["paragraph"],
+          "properties": {
+            "paragraph": { "$ref": "#/$defs/doc_string" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "title": "Preformatted Block",
+          "description": "Preformatted text rendered in a fixed-width font (e.g., code examples, command output).",
+          "type": "object",
+          "required": ["pre"],
+          "properties": {
+            "pre": { "$ref": "#/$defs/doc_string" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "title": "Labeled Item Block",
+          "description": "A labeled item with indented body text, like a definition list entry. The label is typically a flag or option name.",
+          "type": "object",
+          "required": ["label", "text"],
+          "properties": {
+            "label": { "type": "string" },
+            "text": { "$ref": "#/$defs/doc_string" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "title": "No-Blank Block",
+          "description": "Suppresses the blank line that normally appears before the next block. Use to group related blocks visually.",
+          "type": "object",
+          "required": ["noblank"],
+          "properties": {
+            "noblank": { "const": true }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "man_section": {
+      "title": "Man Page Section",
+      "description": "A named section within the man page (e.g., DESCRIPTION, EXAMPLES, BUGS). Standard section names follow man page conventions. Custom sections are allowed.",
+      "type": "object",
+      "required": ["name", "blocks"],
+      "properties": {
+        "name": {
+          "description": "Section heading (e.g., 'DESCRIPTION', 'EXAMPLES', 'SEE ALSO').",
+          "type": "string",
+          "minLength": 1
+        },
+        "blocks": {
+          "description": "Content blocks within this section.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/man_block" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "man_xref": {
+      "title": "Man Page Cross-Reference",
+      "description": "A cross-reference to another man page, rendered as name(section) (e.g., git(1), zlib(3)).",
+      "type": "object",
+      "required": ["name", "section"],
+      "properties": {
+        "name": {
+          "description": "The name of the referenced man page.",
+          "type": "string",
+          "minLength": 1
+        },
+        "section": {
+          "description": "The man page section number (1-9).",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9
+        }
+      },
+      "additionalProperties": false
+    },
+    "man": {
+      "title": "Man Page Information",
+      "description": "Man page metadata and content. The 'section' field specifies the man page section number (default: 1 for user commands). The 'sections' array provides the page body, and 'xrefs' lists cross-references to other man pages.",
+      "type": "object",
+      "properties": {
+        "section": {
+          "description": "Man page section number (1=user commands, 2=syscalls, 3=library, etc.).",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9
+        },
+        "sections": {
+          "description": "Body sections of the man page.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/man_section" }
+        },
+        "xrefs": {
+          "description": "Cross-references to other man pages, listed in SEE ALSO.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/man_xref" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "config": {
+      "title": "Configuration File Specification",
+      "description": "Declares configuration file sources. Commander merges values from configuration files with command line arguments and environment variables. Precedence (highest to lowest): CLI args > environment > local config > user config > system config > defaults.",
+      "type": "object",
+      "required": ["format"],
+      "properties": {
+        "format": {
+          "description": "The configuration file format.",
+          "type": "string",
+          "enum": ["json", "yaml", "toml", "ini"]
+        },
+        "paths": {
+          "description": "Paths to configuration files at each scope level.",
+          "type": "object",
+          "properties": {
+            "system": {
+              "description": "System-wide configuration (e.g., '/etc/myapp/config.json').",
+              "type": "string"
+            },
+            "user": {
+              "description": "Per-user configuration (e.g., '~/.config/myapp/config.json'). Tilde is expanded.",
+              "type": "string"
+            },
+            "local": {
+              "description": "Project-local configuration (e.g., '.myapp.json'). Searched from the working directory upward.",
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "command": {
+      "title": "Command",
+      "description": "A command or subcommand definition. Commands have a name, documentation, and optionally arguments and nested subcommands. A command with both 'args' and 'commands' is a group with a default action (matching cmdliner's Cmd.group ~default).",
+      "type": "object",
+      "required": ["name", "doc"],
+      "properties": {
+        "name": {
+          "description": "The command name as typed on the command line.",
+          "$ref": "#/$defs/identifier"
+        },
+        "doc": {
+          "description": "Short description shown in help listings and the man page NAME section.",
+          "$ref": "#/$defs/doc_string"
+        },
+        "args": {
+          "description": "Argument definitions for this command.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/argument" }
+        },
+        "commands": {
+          "description": "Subcommand definitions. Must contain at least one entry if present.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/command" },
+          "minItems": 1
+        },
+        "man": { "$ref": "#/$defs/man" },
+        "envs": {
+          "description": "Environment variables documented for this command (documentation-only, listed in the ENVIRONMENT man section).",
+          "type": "array",
+          "items": { "$ref": "#/$defs/env_info" }
+        },
+        "exits": {
+          "description": "Exit codes documented for this command (listed in the EXIT STATUS man section).",
+          "type": "array",
+          "items": { "$ref": "#/$defs/exit_info" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "root": {
+      "title": "Root Application",
+      "description": "The top-level application definition. Extends 'command' with root-only fields: 'version' for the application version and 'config' for configuration file sources. This is both the entry point of the schema and the top-level command.",
+      "type": "object",
+      "required": ["name", "doc"],
+      "properties": {
+        "name": {
+          "description": "The application name.",
+          "$ref": "#/$defs/identifier"
+        },
+        "doc": {
+          "description": "Short description shown in help listings and the man page NAME section.",
+          "$ref": "#/$defs/doc_string"
+        },
+        "args": {
+          "description": "Argument definitions for the top-level command.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/argument" }
+        },
+        "commands": {
+          "description": "Subcommand definitions.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/command" },
+          "minItems": 1
+        },
+        "man": { "$ref": "#/$defs/man" },
+        "envs": {
+          "description": "Environment variables documented for this application.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/env_info" }
+        },
+        "exits": {
+          "description": "Exit codes documented for this application.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/exit_info" }
+        },
+        "version": {
+          "description": "Application version in semver format (e.g., '1.2.3' or '1.0').",
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?$"
+        },
+        "config": { "$ref": "#/$defs/config" }
+      },
+      "additionalProperties": false
+    }
+  }
+}
