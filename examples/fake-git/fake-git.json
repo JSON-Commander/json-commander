@@ -1,0 +1,1286 @@
+{
+  "name": "fake-git",
+  "doc": ["The stupid content tracker."],
+  "version": "2.47.0",
+  "args": [
+    {
+      "kind": "option",
+      "names": ["C"],
+      "doc": ["Run as if git was started in the given path."],
+      "type": "dir",
+      "docv": "PATH"
+    },
+    {
+      "kind": "option",
+      "names": ["git-dir"],
+      "doc": ["Set the path to the repository (.git directory)."],
+      "type": "dir",
+      "env": "GIT_DIR"
+    },
+    {
+      "kind": "option",
+      "names": ["work-tree"],
+      "doc": ["Set the path to the working tree."],
+      "type": "dir",
+      "env": "GIT_WORK_TREE"
+    },
+    {
+      "kind": "flag",
+      "names": ["bare"],
+      "doc": ["Treat the repository as a bare repository."]
+    },
+    {
+      "kind": "flag",
+      "names": ["no-pager"],
+      "doc": ["Do not pipe git output into a pager."]
+    },
+    {
+      "kind": "option",
+      "names": ["c"],
+      "doc": ["Pass a configuration parameter to the command."],
+      "type": "string",
+      "repeated": true,
+      "docv": "KEY=VALUE"
+    },
+    {
+      "kind": "flag",
+      "names": ["literal-pathspecs"],
+      "doc": ["Treat pathspecs literally (no globbing, no magic)."]
+    },
+    {
+      "kind": "flag",
+      "names": ["paginate", "p"],
+      "doc": ["Pipe all output into a pager."]
+    }
+  ],
+  "commands": [
+    {
+      "name": "init",
+      "doc": ["Create an empty Git repository or reinitialize an existing one."],
+      "args": [
+        {
+          "kind": "flag",
+          "names": ["bare"],
+          "doc": ["Create a bare repository."]
+        },
+        {
+          "kind": "option",
+          "names": ["initial-branch", "b"],
+          "doc": ["Use the specified name for the initial branch."],
+          "type": "string",
+          "docv": "BRANCH"
+        },
+        {
+          "kind": "flag",
+          "names": ["quiet", "q"],
+          "doc": ["Only print error and warning messages."]
+        },
+        {
+          "kind": "option",
+          "names": ["template"],
+          "doc": ["Specify the directory from which templates will be used."],
+          "type": "dir",
+          "docv": "DIR"
+        },
+        {
+          "kind": "positional",
+          "name": "directory",
+          "doc": ["Target directory for the new repository."],
+          "type": "dir"
+        }
+      ]
+    },
+    {
+      "name": "clone",
+      "doc": ["Clone a repository into a new directory."],
+      "args": [
+        {
+          "kind": "flag",
+          "names": ["bare"],
+          "doc": ["Make a bare Git repository."]
+        },
+        {
+          "kind": "flag",
+          "names": ["mirror"],
+          "doc": ["Set up a mirror of the source repository."]
+        },
+        {
+          "kind": "option",
+          "names": ["depth"],
+          "doc": ["Create a shallow clone with history truncated to the given number of commits."],
+          "type": "int",
+          "docv": "DEPTH"
+        },
+        {
+          "kind": "option",
+          "names": ["branch", "b"],
+          "doc": ["Point HEAD to the given branch instead of the remote HEAD."],
+          "type": "string",
+          "docv": "BRANCH"
+        },
+        {
+          "kind": "flag",
+          "names": ["recurse-submodules"],
+          "doc": ["Initialize and clone submodules after the clone is created."]
+        },
+        {
+          "kind": "flag",
+          "names": ["single-branch"],
+          "doc": ["Clone only the history leading to the tip of a single branch."]
+        },
+        {
+          "kind": "flag",
+          "names": ["quiet", "q"],
+          "doc": ["Operate quietly."]
+        },
+        {
+          "kind": "flag",
+          "names": ["verbose", "v"],
+          "doc": ["Run verbosely."]
+        },
+        {
+          "kind": "option",
+          "names": ["origin"],
+          "doc": ["Use the given name for the remote instead of origin."],
+          "type": "string",
+          "docv": "NAME"
+        },
+        {
+          "kind": "positional",
+          "name": "repository",
+          "doc": ["The remote repository to clone from."],
+          "type": "string",
+          "required": true
+        },
+        {
+          "kind": "positional",
+          "name": "directory",
+          "doc": ["Target directory for the cloned repository."],
+          "type": "dir"
+        }
+      ]
+    },
+    {
+      "name": "add",
+      "doc": ["Add file contents to the index."],
+      "args": [
+        {
+          "kind": "flag",
+          "names": ["all", "A"],
+          "doc": ["Add, modify, and remove index entries to match the working tree."]
+        },
+        {
+          "kind": "flag",
+          "names": ["update", "u"],
+          "doc": ["Update the index just where it already has an entry matching the working tree."]
+        },
+        {
+          "kind": "flag",
+          "names": ["patch", "p"],
+          "doc": ["Interactively choose hunks of patch to add."]
+        },
+        {
+          "kind": "flag",
+          "names": ["force", "f"],
+          "doc": ["Allow adding otherwise ignored files."]
+        },
+        {
+          "kind": "flag",
+          "names": ["dry-run", "n"],
+          "doc": ["Don't actually add the files, just show if they exist."]
+        },
+        {
+          "kind": "positional",
+          "name": "pathspec",
+          "doc": ["Files to add content from."],
+          "type": "string",
+          "repeated": true
+        }
+      ]
+    },
+    {
+      "name": "commit",
+      "doc": ["Record changes to the repository."],
+      "args": [
+        {
+          "kind": "option",
+          "names": ["message", "m"],
+          "doc": ["Use the given message as the commit message."],
+          "type": "string",
+          "docv": "MSG"
+        },
+        {
+          "kind": "flag",
+          "names": ["all", "a"],
+          "doc": ["Automatically stage modified and deleted files before committing."]
+        },
+        {
+          "kind": "flag",
+          "names": ["amend"],
+          "doc": ["Replace the tip of the current branch by creating a new commit."]
+        },
+        {
+          "kind": "flag",
+          "names": ["no-edit"],
+          "doc": ["Use the selected commit message without launching an editor."]
+        },
+        {
+          "kind": "flag",
+          "names": ["allow-empty"],
+          "doc": ["Allow recording a commit that has the exact same tree as its parent."]
+        },
+        {
+          "kind": "flag",
+          "names": ["signoff", "s"],
+          "doc": ["Add a Signed-off-by trailer at the end of the commit message."]
+        },
+        {
+          "kind": "option",
+          "names": ["author"],
+          "doc": ["Override the commit author."],
+          "type": "string",
+          "docv": "AUTHOR"
+        },
+        {
+          "kind": "flag",
+          "names": ["no-verify"],
+          "doc": ["Bypass the pre-commit and commit-msg hooks."]
+        },
+        {
+          "kind": "flag",
+          "names": ["quiet", "q"],
+          "doc": ["Suppress the commit summary message."]
+        },
+        {
+          "kind": "flag",
+          "names": ["verbose", "v"],
+          "doc": ["Show unified diff between the HEAD commit and what would be committed."]
+        },
+        {
+          "kind": "positional",
+          "name": "pathspec",
+          "doc": ["Limit the commit to the given paths."],
+          "type": "string",
+          "repeated": true
+        }
+      ]
+    },
+    {
+      "name": "status",
+      "doc": ["Show the working tree status."],
+      "args": [
+        {
+          "kind": "flag",
+          "names": ["short", "s"],
+          "doc": ["Give the output in the short format."]
+        },
+        {
+          "kind": "flag",
+          "names": ["branch", "b"],
+          "doc": ["Show the branch and tracking info even in short format."]
+        },
+        {
+          "kind": "flag",
+          "names": ["porcelain"],
+          "doc": ["Give the output in an easy-to-parse format for scripts."]
+        },
+        {
+          "kind": "option",
+          "names": ["untracked-files", "u"],
+          "doc": ["Show untracked files."],
+          "type": "enum",
+          "choices": ["no", "normal", "all"],
+          "default": "normal",
+          "docv": "MODE"
+        },
+        {
+          "kind": "positional",
+          "name": "pathspec",
+          "doc": ["Limit output to the given paths."],
+          "type": "string",
+          "repeated": true
+        }
+      ]
+    },
+    {
+      "name": "diff",
+      "doc": ["Show changes between commits, commit and working tree, etc."],
+      "args": [
+        {
+          "kind": "flag",
+          "names": ["staged", "cached"],
+          "doc": ["Show changes between the index and HEAD."]
+        },
+        {
+          "kind": "flag",
+          "names": ["stat"],
+          "doc": ["Generate a diffstat."]
+        },
+        {
+          "kind": "flag",
+          "names": ["name-only"],
+          "doc": ["Show only the names of changed files."]
+        },
+        {
+          "kind": "flag",
+          "names": ["name-status"],
+          "doc": ["Show names and status of changed files."]
+        },
+        {
+          "kind": "option",
+          "names": ["unified", "U"],
+          "doc": ["Generate diffs with the given number of lines of context."],
+          "type": "int",
+          "docv": "N"
+        },
+        {
+          "kind": "flag",
+          "names": ["quiet", "q"],
+          "doc": ["Disable all output, useful only for the exit code."]
+        },
+        {
+          "kind": "positional",
+          "name": "pathspec",
+          "doc": ["Limit the diff to the given paths."],
+          "type": "string",
+          "repeated": true
+        }
+      ]
+    },
+    {
+      "name": "log",
+      "doc": ["Show commit logs."],
+      "args": [
+        {
+          "kind": "flag",
+          "names": ["oneline"],
+          "doc": ["Shorthand for --pretty=oneline --abbrev-commit."]
+        },
+        {
+          "kind": "option",
+          "names": ["n"],
+          "doc": ["Limit the number of commits to output."],
+          "type": "int",
+          "docv": "NUMBER"
+        },
+        {
+          "kind": "flag",
+          "names": ["patch", "p"],
+          "doc": ["Generate patch output."]
+        },
+        {
+          "kind": "flag",
+          "names": ["stat"],
+          "doc": ["Generate a diffstat."]
+        },
+        {
+          "kind": "flag",
+          "names": ["name-only"],
+          "doc": ["Show only names of changed files."]
+        },
+        {
+          "kind": "flag",
+          "names": ["graph"],
+          "doc": ["Draw a text-based graphical representation of commit history."]
+        },
+        {
+          "kind": "option",
+          "names": ["author"],
+          "doc": ["Limit commits to those matching the given author pattern."],
+          "type": "string",
+          "docv": "PATTERN"
+        },
+        {
+          "kind": "option",
+          "names": ["since"],
+          "doc": ["Show commits more recent than a specific date."],
+          "type": "string",
+          "docv": "DATE"
+        },
+        {
+          "kind": "option",
+          "names": ["until"],
+          "doc": ["Show commits older than a specific date."],
+          "type": "string",
+          "docv": "DATE"
+        },
+        {
+          "kind": "option",
+          "names": ["format"],
+          "doc": ["Pretty-print the commit log in the given format."],
+          "type": "string",
+          "docv": "FORMAT"
+        },
+        {
+          "kind": "flag",
+          "names": ["all"],
+          "doc": ["Pretend as if all refs in refs/ are listed on the command line."]
+        },
+        {
+          "kind": "flag",
+          "names": ["reverse"],
+          "doc": ["Output the commits in reverse order."]
+        },
+        {
+          "kind": "flag",
+          "names": ["no-merges"],
+          "doc": ["Do not print commits with more than one parent."]
+        },
+        {
+          "kind": "option",
+          "names": ["S"],
+          "doc": ["Look for differences that change the number of occurrences of the given string."],
+          "type": "string",
+          "docv": "STRING"
+        },
+        {
+          "kind": "flag",
+          "names": ["follow"],
+          "doc": ["Continue listing file history beyond renames."]
+        },
+        {
+          "kind": "positional",
+          "name": "revision",
+          "doc": ["Show only commits reachable from the given revision."],
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "push",
+      "doc": ["Update remote refs along with associated objects."],
+      "args": [
+        {
+          "kind": "flag",
+          "names": ["force", "f"],
+          "doc": ["Usually the command refuses to update a remote ref that is not an ancestor of the local ref used to overwrite it."]
+        },
+        {
+          "kind": "flag",
+          "names": ["force-with-lease"],
+          "doc": ["Protect against force pushes by ensuring the remote ref matches expectations."]
+        },
+        {
+          "kind": "flag",
+          "names": ["set-upstream", "u"],
+          "doc": ["Add upstream tracking reference for every branch that is pushed."]
+        },
+        {
+          "kind": "flag",
+          "names": ["all"],
+          "doc": ["Push all branches."]
+        },
+        {
+          "kind": "flag",
+          "names": ["tags"],
+          "doc": ["Push all refs under refs/tags."]
+        },
+        {
+          "kind": "flag",
+          "names": ["delete", "d"],
+          "doc": ["Delete the specified remote branches."]
+        },
+        {
+          "kind": "flag",
+          "names": ["prune"],
+          "doc": ["Remove remote branches that do not have a local counterpart."]
+        },
+        {
+          "kind": "flag",
+          "names": ["no-verify"],
+          "doc": ["Bypass the pre-push hook."]
+        },
+        {
+          "kind": "flag",
+          "names": ["quiet", "q"],
+          "doc": ["Suppress all output including the listing of updated refs."]
+        },
+        {
+          "kind": "flag",
+          "names": ["verbose", "v"],
+          "doc": ["Run verbosely."]
+        },
+        {
+          "kind": "flag",
+          "names": ["dry-run"],
+          "doc": ["Do everything except actually send the updates."]
+        },
+        {
+          "kind": "positional",
+          "name": "repository",
+          "doc": ["The remote repository that is the destination of the push."],
+          "type": "string"
+        },
+        {
+          "kind": "positional",
+          "name": "refspec",
+          "doc": ["Specify what destination ref to update with what source object."],
+          "type": "string",
+          "repeated": true
+        }
+      ]
+    },
+    {
+      "name": "pull",
+      "doc": ["Fetch from and integrate with another repository or a local branch."],
+      "args": [
+        {
+          "kind": "flag_group",
+          "dest": "rebase-mode",
+          "doc": ["Control whether to rebase or merge the fetched branch."],
+          "default": null,
+          "flags": [
+            {
+              "names": ["rebase"],
+              "doc": ["Rebase the current branch on top of the upstream branch after fetching."],
+              "value": "rebase"
+            },
+            {
+              "names": ["no-rebase"],
+              "doc": ["Merge the upstream branch into the current branch after fetching."],
+              "value": "no-rebase"
+            }
+          ]
+        },
+        {
+          "kind": "flag_group",
+          "dest": "ff-mode",
+          "doc": ["Control the fast-forward behavior of the merge."],
+          "default": null,
+          "flags": [
+            {
+              "names": ["ff-only"],
+              "doc": ["Refuse to merge unless the current HEAD is already up to date or the merge can be resolved as a fast-forward."],
+              "value": "ff-only"
+            },
+            {
+              "names": ["no-ff"],
+              "doc": ["Create a merge commit even when the merge resolves as a fast-forward."],
+              "value": "no-ff"
+            }
+          ]
+        },
+        {
+          "kind": "flag",
+          "names": ["squash"],
+          "doc": ["Squash all commits into a single commit on top of the current branch."]
+        },
+        {
+          "kind": "flag",
+          "names": ["no-verify"],
+          "doc": ["Bypass the pre-merge-commit hook."]
+        },
+        {
+          "kind": "flag",
+          "names": ["quiet", "q"],
+          "doc": ["Suppress output during transfer and merge."]
+        },
+        {
+          "kind": "flag",
+          "names": ["verbose", "v"],
+          "doc": ["Be more verbose."]
+        },
+        {
+          "kind": "flag",
+          "names": ["autostash"],
+          "doc": ["Automatically stash and unstash local changes before and after the operation."]
+        },
+        {
+          "kind": "option",
+          "names": ["strategy"],
+          "doc": ["Use the given merge strategy."],
+          "type": "string",
+          "docv": "STRATEGY"
+        },
+        {
+          "kind": "positional",
+          "name": "repository",
+          "doc": ["The remote repository to pull from."],
+          "type": "string"
+        },
+        {
+          "kind": "positional",
+          "name": "branch",
+          "doc": ["The remote branch to pull."],
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "fetch",
+      "doc": ["Download objects and refs from another repository."],
+      "args": [
+        {
+          "kind": "flag",
+          "names": ["all"],
+          "doc": ["Fetch all remotes."]
+        },
+        {
+          "kind": "flag",
+          "names": ["prune", "p"],
+          "doc": ["Before fetching, remove any remote-tracking references that no longer exist on the remote."]
+        },
+        {
+          "kind": "flag",
+          "names": ["tags"],
+          "doc": ["Fetch all tags from the remote."]
+        },
+        {
+          "kind": "flag",
+          "names": ["no-tags"],
+          "doc": ["Disable automatic tag following."]
+        },
+        {
+          "kind": "option",
+          "names": ["depth"],
+          "doc": ["Limit fetching to the specified number of commits from the tip of each remote branch history."],
+          "type": "int",
+          "docv": "DEPTH"
+        },
+        {
+          "kind": "flag",
+          "names": ["unshallow"],
+          "doc": ["Convert a shallow repository to a complete one."]
+        },
+        {
+          "kind": "flag",
+          "names": ["force", "f"],
+          "doc": ["Force update of local branches."]
+        },
+        {
+          "kind": "flag",
+          "names": ["quiet", "q"],
+          "doc": ["Suppress output."]
+        },
+        {
+          "kind": "flag",
+          "names": ["verbose", "v"],
+          "doc": ["Be verbose."]
+        },
+        {
+          "kind": "flag",
+          "names": ["dry-run"],
+          "doc": ["Show what would be done without making any changes."]
+        },
+        {
+          "kind": "flag",
+          "names": ["atomic"],
+          "doc": ["Use an atomic transaction to update local refs."]
+        },
+        {
+          "kind": "positional",
+          "name": "repository",
+          "doc": ["The remote repository to fetch from."],
+          "type": "string"
+        },
+        {
+          "kind": "positional",
+          "name": "refspec",
+          "doc": ["The refs to fetch and the local refs to update."],
+          "type": "string",
+          "repeated": true
+        }
+      ]
+    },
+    {
+      "name": "branch",
+      "doc": ["List, create, or delete branches."],
+      "args": [
+        {
+          "kind": "flag",
+          "names": ["all", "a"],
+          "doc": ["List both remote-tracking branches and local branches."]
+        },
+        {
+          "kind": "flag",
+          "names": ["remotes", "r"],
+          "doc": ["List the remote-tracking branches."]
+        },
+        {
+          "kind": "flag_group",
+          "dest": "delete-mode",
+          "doc": ["Delete a branch."],
+          "default": null,
+          "flags": [
+            {
+              "names": ["d"],
+              "doc": ["Delete a branch. The branch must be fully merged in its upstream branch."],
+              "value": "d"
+            },
+            {
+              "names": ["D"],
+              "doc": ["Force delete a branch, even if it is not fully merged."],
+              "value": "D"
+            }
+          ]
+        },
+        {
+          "kind": "flag",
+          "names": ["move", "m"],
+          "doc": ["Move/rename a branch."]
+        },
+        {
+          "kind": "flag",
+          "names": ["verbose", "v"],
+          "doc": ["Show sha1 and commit subject line for each head."]
+        },
+        {
+          "kind": "option",
+          "names": ["merged"],
+          "doc": ["Only list branches whose tips are reachable from the specified commit."],
+          "type": "string",
+          "docv": "COMMIT"
+        },
+        {
+          "kind": "option",
+          "names": ["no-merged"],
+          "doc": ["Only list branches whose tips are not reachable from the specified commit."],
+          "type": "string",
+          "docv": "COMMIT"
+        },
+        {
+          "kind": "option",
+          "names": ["set-upstream-to", "u"],
+          "doc": ["Set up branch tracking information."],
+          "type": "string",
+          "docv": "UPSTREAM"
+        },
+        {
+          "kind": "flag",
+          "names": ["unset-upstream"],
+          "doc": ["Remove the upstream information for the given branch."]
+        },
+        {
+          "kind": "flag",
+          "names": ["quiet", "q"],
+          "doc": ["Be more quiet."]
+        },
+        {
+          "kind": "positional",
+          "name": "branch-name",
+          "doc": ["The name of the branch."],
+          "type": "string"
+        },
+        {
+          "kind": "positional",
+          "name": "start-point",
+          "doc": ["The starting point for the new branch."],
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "checkout",
+      "doc": ["Switch branches or restore working tree files."],
+      "args": [
+        {
+          "kind": "option",
+          "names": ["b"],
+          "doc": ["Create a new branch and start it at the given commit."],
+          "type": "string",
+          "docv": "BRANCH"
+        },
+        {
+          "kind": "option",
+          "names": ["B"],
+          "doc": ["Create or reset a branch and start it at the given commit."],
+          "type": "string",
+          "docv": "BRANCH"
+        },
+        {
+          "kind": "flag",
+          "names": ["track"],
+          "doc": ["Set up upstream configuration when creating a new branch."]
+        },
+        {
+          "kind": "flag",
+          "names": ["no-track"],
+          "doc": ["Do not set up upstream configuration."]
+        },
+        {
+          "kind": "flag",
+          "names": ["quiet", "q"],
+          "doc": ["Quiet, suppress feedback messages."]
+        },
+        {
+          "kind": "flag",
+          "names": ["force", "f"],
+          "doc": ["Proceed even if the index or the working tree differs from HEAD."]
+        },
+        {
+          "kind": "flag",
+          "names": ["detach"],
+          "doc": ["Detach HEAD at the named commit."]
+        },
+        {
+          "kind": "positional",
+          "name": "tree-ish",
+          "doc": ["Branch or commit to check out."],
+          "type": "string"
+        },
+        {
+          "kind": "positional",
+          "name": "pathspec",
+          "doc": ["Limit paths affected by the checkout."],
+          "type": "string",
+          "repeated": true
+        }
+      ]
+    },
+    {
+      "name": "merge",
+      "doc": ["Join two or more development histories together."],
+      "args": [
+        {
+          "kind": "flag_group",
+          "dest": "ff-mode",
+          "doc": ["Control the fast-forward behavior."],
+          "default": null,
+          "flags": [
+            {
+              "names": ["no-ff"],
+              "doc": ["Create a merge commit even when the merge resolves as a fast-forward."],
+              "value": "no-ff"
+            },
+            {
+              "names": ["ff-only"],
+              "doc": ["Refuse to merge unless the current HEAD is already up to date or the merge can be resolved as a fast-forward."],
+              "value": "ff-only"
+            }
+          ]
+        },
+        {
+          "kind": "flag",
+          "names": ["squash"],
+          "doc": ["Produce the working tree and index state as if a merge happened but do not make a commit."]
+        },
+        {
+          "kind": "flag_group",
+          "dest": "action",
+          "doc": ["Control merge action state."],
+          "default": null,
+          "flags": [
+            {
+              "names": ["abort"],
+              "doc": ["Abort the current conflict resolution process and reconstruct the pre-merge state."],
+              "value": "abort"
+            },
+            {
+              "names": ["continue"],
+              "doc": ["Continue the merge after resolving conflicts."],
+              "value": "continue"
+            }
+          ]
+        },
+        {
+          "kind": "option",
+          "names": ["m"],
+          "doc": ["Set the commit message to be used for the merge commit."],
+          "type": "string",
+          "docv": "MSG"
+        },
+        {
+          "kind": "flag",
+          "names": ["quiet", "q"],
+          "doc": ["Operate quietly."]
+        },
+        {
+          "kind": "flag",
+          "names": ["verbose", "v"],
+          "doc": ["Be verbose."]
+        },
+        {
+          "kind": "flag",
+          "names": ["no-commit"],
+          "doc": ["Perform the merge and stop just before creating a merge commit."]
+        },
+        {
+          "kind": "option",
+          "names": ["strategy"],
+          "doc": ["Use the given merge strategy."],
+          "type": "string",
+          "docv": "STRATEGY"
+        },
+        {
+          "kind": "positional",
+          "name": "commit",
+          "doc": ["Commits to merge into the current branch."],
+          "type": "string",
+          "repeated": true
+        }
+      ]
+    },
+    {
+      "name": "rebase",
+      "doc": ["Reapply commits on top of another base tip."],
+      "args": [
+        {
+          "kind": "flag",
+          "names": ["interactive", "i"],
+          "doc": ["Make a list of the commits which are about to be rebased and let the user edit."]
+        },
+        {
+          "kind": "option",
+          "names": ["onto"],
+          "doc": ["Starting point at which to create the new commits."],
+          "type": "string",
+          "docv": "NEWBASE"
+        },
+        {
+          "kind": "flag_group",
+          "dest": "action",
+          "doc": ["Control rebase action state."],
+          "default": null,
+          "flags": [
+            {
+              "names": ["abort"],
+              "doc": ["Abort the rebase operation and reset HEAD to the original branch."],
+              "value": "abort"
+            },
+            {
+              "names": ["continue"],
+              "doc": ["Restart the rebasing process after having resolved a merge conflict."],
+              "value": "continue"
+            },
+            {
+              "names": ["skip"],
+              "doc": ["Restart the rebasing process by skipping the current patch."],
+              "value": "skip"
+            }
+          ]
+        },
+        {
+          "kind": "flag",
+          "names": ["autostash"],
+          "doc": ["Automatically stash and unstash local changes before and after the operation."]
+        },
+        {
+          "kind": "flag",
+          "names": ["quiet", "q"],
+          "doc": ["Be quiet."]
+        },
+        {
+          "kind": "flag",
+          "names": ["verbose", "v"],
+          "doc": ["Be verbose."]
+        },
+        {
+          "kind": "option",
+          "names": ["exec"],
+          "doc": ["Append an exec command after each line creating a commit in the final history."],
+          "type": "string",
+          "docv": "CMD"
+        },
+        {
+          "kind": "option",
+          "names": ["strategy"],
+          "doc": ["Use the given merge strategy."],
+          "type": "string",
+          "docv": "STRATEGY"
+        },
+        {
+          "kind": "positional",
+          "name": "upstream",
+          "doc": ["Upstream branch to compare against."],
+          "type": "string"
+        },
+        {
+          "kind": "positional",
+          "name": "branch",
+          "doc": ["Working branch; defaults to HEAD."],
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "tag",
+      "doc": ["Create, list, delete or verify a tag object."],
+      "args": [
+        {
+          "kind": "flag",
+          "names": ["annotate", "a"],
+          "doc": ["Make an unsigned, annotated tag object."]
+        },
+        {
+          "kind": "flag",
+          "names": ["delete", "d"],
+          "doc": ["Delete existing tags with the given names."]
+        },
+        {
+          "kind": "flag",
+          "names": ["list", "l"],
+          "doc": ["List tags matching the given pattern."]
+        },
+        {
+          "kind": "option",
+          "names": ["m"],
+          "doc": ["Use the given tag message."],
+          "type": "string",
+          "docv": "MSG"
+        },
+        {
+          "kind": "flag",
+          "names": ["force", "f"],
+          "doc": ["Replace an existing tag with the given name."]
+        },
+        {
+          "kind": "option",
+          "names": ["sort"],
+          "doc": ["Sort based on the key given."],
+          "type": "string",
+          "docv": "KEY"
+        },
+        {
+          "kind": "option",
+          "names": ["n"],
+          "doc": ["Print the given number of lines from the annotation when using -l."],
+          "type": "int",
+          "docv": "NUM"
+        },
+        {
+          "kind": "positional",
+          "name": "tag-name",
+          "doc": ["The name of the tag to create, delete, or list."],
+          "type": "string"
+        },
+        {
+          "kind": "positional",
+          "name": "commit",
+          "doc": ["Object the new tag will refer to."],
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "stash",
+      "doc": ["Stash the changes in a dirty working directory away."],
+      "commands": [
+        {
+          "name": "push",
+          "doc": ["Save your local modifications to a new stash entry."],
+          "args": [
+            {
+              "kind": "option",
+              "names": ["m"],
+              "doc": ["Use the given message as the stash description."],
+              "type": "string",
+              "docv": "MSG"
+            },
+            {
+              "kind": "flag",
+              "names": ["include-untracked", "u"],
+              "doc": ["Include untracked files in the stash."]
+            },
+            {
+              "kind": "flag",
+              "names": ["all", "a"],
+              "doc": ["Include all files, including ignored files."]
+            },
+            {
+              "kind": "flag",
+              "names": ["quiet", "q"],
+              "doc": ["Quiet, suppress feedback messages."]
+            },
+            {
+              "kind": "positional",
+              "name": "pathspec",
+              "doc": ["Limit stashing to the given paths."],
+              "type": "string",
+              "repeated": true
+            }
+          ]
+        },
+        {
+          "name": "pop",
+          "doc": ["Remove a single stashed state from the stash list and apply it."],
+          "args": [
+            {
+              "kind": "positional",
+              "name": "stash",
+              "doc": ["The stash entry to pop, e.g. stash@{0}."],
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "apply",
+          "doc": ["Apply a single stashed state without removing it from the stash list."],
+          "args": [
+            {
+              "kind": "positional",
+              "name": "stash",
+              "doc": ["The stash entry to apply, e.g. stash@{0}."],
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "list",
+          "doc": ["List the stash entries that you currently have."]
+        },
+        {
+          "name": "drop",
+          "doc": ["Remove a single stashed state from the stash list."],
+          "args": [
+            {
+              "kind": "positional",
+              "name": "stash",
+              "doc": ["The stash entry to remove, e.g. stash@{0}."],
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "show",
+          "doc": ["Show the changes recorded in the stash entry as a diff."],
+          "args": [
+            {
+              "kind": "flag",
+              "names": ["patch", "p"],
+              "doc": ["Show the stash entry in patch form."]
+            },
+            {
+              "kind": "positional",
+              "name": "stash",
+              "doc": ["The stash entry to show, e.g. stash@{0}."],
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "clear",
+          "doc": ["Remove all the stash entries."]
+        },
+        {
+          "name": "branch",
+          "doc": ["Create and check out a new branch starting from the commit at which the stash was originally created."],
+          "args": [
+            {
+              "kind": "positional",
+              "name": "branch-name",
+              "doc": ["The name of the branch to create."],
+              "type": "string"
+            },
+            {
+              "kind": "positional",
+              "name": "stash",
+              "doc": ["The stash entry to use, e.g. stash@{0}."],
+              "type": "string"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "remote",
+      "doc": ["Manage set of tracked repositories."],
+      "commands": [
+        {
+          "name": "add",
+          "doc": ["Add a remote named name for the repository at url."],
+          "args": [
+            {
+              "kind": "positional",
+              "name": "name",
+              "doc": ["The name of the remote to add."],
+              "type": "string"
+            },
+            {
+              "kind": "positional",
+              "name": "url",
+              "doc": ["The URL of the remote repository."],
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "remove",
+          "doc": ["Remove the remote named name."],
+          "args": [
+            {
+              "kind": "positional",
+              "name": "name",
+              "doc": ["The name of the remote to remove."],
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "rename",
+          "doc": ["Rename the remote named old to new."],
+          "args": [
+            {
+              "kind": "positional",
+              "name": "old-name",
+              "doc": ["The current name of the remote."],
+              "type": "string"
+            },
+            {
+              "kind": "positional",
+              "name": "new-name",
+              "doc": ["The new name for the remote."],
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "show",
+          "doc": ["Gives some information about the remote."],
+          "args": [
+            {
+              "kind": "flag",
+              "names": ["n"],
+              "doc": ["Do not query remote heads."]
+            },
+            {
+              "kind": "positional",
+              "name": "name",
+              "doc": ["The name of the remote to show."],
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "get-url",
+          "doc": ["Retrieves the URLs for a remote."],
+          "args": [
+            {
+              "kind": "flag",
+              "names": ["push"],
+              "doc": ["Query the push URL rather than the fetch URL."]
+            },
+            {
+              "kind": "positional",
+              "name": "name",
+              "doc": ["The name of the remote."],
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "set-url",
+          "doc": ["Changes URLs for the remote."],
+          "args": [
+            {
+              "kind": "flag",
+              "names": ["push"],
+              "doc": ["Manipulate push URLs instead of fetch URLs."]
+            },
+            {
+              "kind": "positional",
+              "name": "name",
+              "doc": ["The name of the remote."],
+              "type": "string"
+            },
+            {
+              "kind": "positional",
+              "name": "url",
+              "doc": ["The new URL for the remote."],
+              "type": "string"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

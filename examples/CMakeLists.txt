@@ -10,5 +10,6 @@ macro(commander_add_example example_name)
     CXX_STANDARD ${commander_CXX_STANDARD})
 endmacro()
 
+add_subdirectory(fake-git)
 add_subdirectory(greet)
 add_subdirectory(serve)
