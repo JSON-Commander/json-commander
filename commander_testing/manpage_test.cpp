@@ -851,6 +851,57 @@ TEST_CASE("to_plain_text(root) produces readable output with all sections", "[ma
   REQUIRE(output.find("A simple tool.") != std::string::npos);
 }
 
+// ---------------------------------------------------------------------------
+// Phase 11: Subcommand SYNOPSIS uses space-separated name
+// ---------------------------------------------------------------------------
+
+TEST_CASE("to_groff subcommand SYNOPSIS uses space-separated name", "[manpage]") {
+  auto root = make_test_root();
+
+  SECTION("single-level subcommand") {
+    auto output = to_groff(root, {"build"});
+    // SYNOPSIS should use space-separated form
+    REQUIRE(output.find("\\fBmytool build\\fR") != std::string::npos);
+    // NAME should still use hyphenated form
+    REQUIRE(output.find("mytool-build \\- Build the project.") != std::string::npos);
+  }
+
+  SECTION("nested subcommand") {
+    auto output = to_groff(root, {"stash", "push"});
+    // SYNOPSIS should use space-separated form
+    REQUIRE(output.find("\\fBmytool stash push\\fR") != std::string::npos);
+    // NAME should still use hyphenated form
+    REQUIRE(output.find("mytool-stash-push \\- Save local modifications.") != std::string::npos);
+  }
+}
+
+TEST_CASE("to_plain_text subcommand SYNOPSIS uses space-separated name", "[manpage][plain]") {
+  auto root = make_test_root();
+
+  SECTION("single-level subcommand") {
+    auto output = to_plain_text(root, {"build"});
+    // SYNOPSIS should use space-separated form
+    REQUIRE(output.find("mytool build") != std::string::npos);
+    // NAME should still use hyphenated form
+    REQUIRE(output.find("mytool-build") != std::string::npos);
+  }
+
+  SECTION("nested subcommand") {
+    auto output = to_plain_text(root, {"stash", "push"});
+    // SYNOPSIS should use space-separated form
+    REQUIRE(output.find("mytool stash push") != std::string::npos);
+    // NAME should still use hyphenated form
+    REQUIRE(output.find("mytool-stash-push") != std::string::npos);
+  }
+}
+
+TEST_CASE("to_groff root command SYNOPSIS is unaffected", "[manpage]") {
+  auto root = make_test_root();
+  auto output = to_groff(root);
+  // Root command should use plain name (no hyphens, no spaces to split)
+  REQUIRE(output.find("\\fBmytool\\fR") != std::string::npos);
+}
+
 TEST_CASE("to_plain_text(root, {\"build\"}) produces subcommand output", "[manpage][plain]") {
   auto root = make_test_root();
   auto output = to_plain_text(root, {"build"});

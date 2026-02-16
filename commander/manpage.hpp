@@ -491,7 +491,9 @@ namespace commander::manpage {
 
   template <typename T>
   std::vector<model::ManSection>
-  assemble(const T &root, const std::string &display_name) {
+  assemble(const T &root,
+           const std::string &display_name,
+           const std::string &synopsis_name = "") {
     std::map<std::string, model::ManSection> section_map;
     std::vector<std::string> section_names;
 
@@ -505,13 +507,14 @@ namespace commander::manpage {
       }
     };
 
-    // NAME
+    // NAME (always hyphenated per man convention)
     add_section(make_name_section(display_name, root.doc));
 
-    // SYNOPSIS
+    // SYNOPSIS (space-separated for subcommands)
+    const std::string &syn_name = synopsis_name.empty() ? display_name : synopsis_name;
     bool has_commands = root.commands.has_value() && !root.commands->empty();
     add_section(make_synopsis_section(
-        display_name, root.args.value_or(std::vector<model::Argument>{}), has_commands));
+        syn_name, root.args.value_or(std::vector<model::Argument>{}), has_commands));
 
     // User-provided sections
     if (root.man.has_value() && root.man->sections.has_value()) {
@@ -614,12 +617,13 @@ namespace commander::manpage {
   inline std::string
   to_groff(const model::Command &cmd,
            const std::string &full_name,
-           const std::string &version = "") {
+           const std::string &version = "",
+           const std::string &synopsis_name = "") {
     int man_section = 1;
     if (cmd.man.has_value() && cmd.man->section.has_value()) {
       man_section = *cmd.man->section;
     }
-    auto sections = assemble(cmd, full_name);
+    auto sections = assemble(cmd, full_name, synopsis_name);
     return groff::render_page(full_name, man_section, version, sections);
   }
 
@@ -633,11 +637,13 @@ namespace commander::manpage {
     const auto &cmd = find_command(root, command_path);
 
     std::string full_name = root.name;
+    std::string syn_name = root.name;
     for (const auto &segment : command_path) {
       full_name += "-" + segment;
+      syn_name += " " + segment;
     }
 
-    return to_groff(cmd, full_name, version);
+    return to_groff(cmd, full_name, version, syn_name);
   }
 
   // -------------------------------------------------------------------------
@@ -651,8 +657,10 @@ namespace commander::manpage {
   }
 
   inline std::string
-  to_plain_text(const model::Command &cmd, const std::string &full_name) {
-    auto sections = assemble(cmd, full_name);
+  to_plain_text(const model::Command &cmd,
+                const std::string &full_name,
+                const std::string &synopsis_name = "") {
+    auto sections = assemble(cmd, full_name, synopsis_name);
     return plain::render_page(full_name, sections);
   }
 
@@ -665,11 +673,13 @@ namespace commander::manpage {
     const auto &cmd = find_command(root, command_path);
 
     std::string full_name = root.name;
+    std::string syn_name = root.name;
     for (const auto &segment : command_path) {
       full_name += "-" + segment;
+      syn_name += " " + segment;
     }
 
-    return to_plain_text(cmd, full_name);
+    return to_plain_text(cmd, full_name, syn_name);
   }
 
 } // namespace commander::manpage
