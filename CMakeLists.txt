@@ -4,6 +4,7 @@ project(commander VERSION 0.1.0 LANGUAGES C CXX)
 
 option(commander_BUILD_TESTING "Build the commander tests" ON)
 option(commander_BUILD_EXAMPLES "Build the commander examples" ON)
+option(commander_BUILD_TOOLS "Build the commander tools" ON)
 set(commander_CXX_STANDARD 20 CACHE STRING "C++ standard for commander")
 
 include(GNUInstallDirs)
@@ -26,6 +27,10 @@ endif()
 
 if(commander_BUILD_EXAMPLES)
   add_subdirectory(examples)
+endif()
+
+if(commander_BUILD_TOOLS)
+  add_subdirectory(tools)
 endif()
 
 install(EXPORT commander_EXPORTS
