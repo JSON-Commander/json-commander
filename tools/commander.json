@@ -1,0 +1,100 @@
+{
+  "name": "commander",
+  "doc": ["A tool for working with commander CLI schemas."],
+  "version": "0.1.0",
+  "commands": [
+    {
+      "name": "validate",
+      "doc": ["Validate a schema against the commander metaschema."],
+      "args": [
+        {
+          "kind": "positional",
+          "name": "schema-file",
+          "doc": ["Path to the commander schema file."],
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "config-schema",
+      "doc": ["Generate a JSON Schema for runtime configuration."],
+      "args": [
+        {
+          "kind": "positional",
+          "name": "schema-file",
+          "doc": ["Path to the commander schema file."],
+          "type": "string",
+          "required": true
+        },
+        {
+          "kind": "positional",
+          "name": "subcommand",
+          "doc": ["Subcommand path within the schema."],
+          "type": "string",
+          "repeated": true
+        }
+      ]
+    },
+    {
+      "name": "parse",
+      "doc": ["Parse arguments against a schema and output runtime configuration."],
+      "args": [
+        {
+          "kind": "positional",
+          "name": "schema-file",
+          "doc": ["Path to the commander schema file."],
+          "type": "string",
+          "required": true
+        },
+        {
+          "kind": "positional",
+          "name": "schema-args",
+          "doc": ["Arguments to parse (after --)."],
+          "type": "string",
+          "repeated": true
+        }
+      ]
+    },
+    {
+      "name": "help",
+      "doc": ["Generate plain-text help for a schema."],
+      "args": [
+        {
+          "kind": "positional",
+          "name": "schema-file",
+          "doc": ["Path to the commander schema file."],
+          "type": "string",
+          "required": true
+        },
+        {
+          "kind": "positional",
+          "name": "subcommand",
+          "doc": ["Subcommand path within the schema."],
+          "type": "string",
+          "repeated": true
+        }
+      ]
+    },
+    {
+      "name": "man",
+      "doc": ["Generate a groff man page for a schema."],
+      "args": [
+        {
+          "kind": "positional",
+          "name": "schema-file",
+          "doc": ["Path to the commander schema file."],
+          "type": "string",
+          "required": true
+        },
+        {
+          "kind": "positional",
+          "name": "subcommand",
+          "doc": ["Subcommand path within the schema."],
+          "type": "string",
+          "repeated": true
+        }
+      ]
+    }
+  ]
+}
