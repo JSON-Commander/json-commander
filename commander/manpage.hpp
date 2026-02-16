@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <map>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -204,6 +205,87 @@ namespace commander::manpage {
     }
 
   } // namespace groff
+
+  // -------------------------------------------------------------------------
+  // Plain-text rendering
+  // -------------------------------------------------------------------------
+
+  namespace plain {
+
+    inline std::string
+    unescape(const std::string &text) {
+      std::string result;
+      result.reserve(text.size());
+      for (std::size_t i = 0; i < text.size(); ++i) {
+        if (text[i] == '\\' && i + 1 < text.size()) {
+          char next = text[i + 1];
+          if (next == 'f' && i + 2 < text.size()) {
+            // \fB, \fR, \fI — font codes, skip all three characters
+            i += 2;
+          } else if (next == '-') {
+            result += '-';
+            ++i;
+          } else if (next == '&') {
+            // zero-width space — skip both characters
+            ++i;
+          } else if (next == '\\') {
+            result += '\\';
+            ++i;
+          } else {
+            result += text[i];
+          }
+        } else {
+          result += text[i];
+        }
+      }
+      return result;
+    }
+
+    inline std::string
+    render_block(const model::ManBlock &block) {
+      return std::visit(
+          [](const auto &b) -> std::string {
+            using T = std::decay_t<decltype(b)>;
+            if constexpr (std::is_same_v<T, model::ParagraphBlock>) {
+              return "       " + unescape(detail::docstring_to_text(b.paragraph)) + "\n";
+            } else if constexpr (std::is_same_v<T, model::PreBlock>) {
+              std::string result;
+              for (const auto &line : b.pre) {
+                result += "       " + line + "\n";
+              }
+              return result;
+            } else if constexpr (std::is_same_v<T, model::LabelTextBlock>) {
+              std::string result;
+              result += "       " + unescape(b.label) + "\n";
+              result += "           " + unescape(detail::docstring_to_text(b.text)) + "\n";
+              return result;
+            } else if constexpr (std::is_same_v<T, model::NoBlankBlock>) {
+              return "";
+            }
+          },
+          block);
+    }
+
+    inline std::string
+    render_section(const model::ManSection &section) {
+      std::string result = section.name + "\n";
+      for (const auto &block : section.blocks) {
+        result += render_block(block);
+      }
+      result += "\n";
+      return result;
+    }
+
+    inline std::string
+    render_page(const std::string & /*name*/, const std::vector<model::ManSection> &sections) {
+      std::string result;
+      for (const auto &section : sections) {
+        result += render_section(section);
+      }
+      return result;
+    }
+
+  } // namespace plain
 
   // -------------------------------------------------------------------------
   // Argument section generation
@@ -407,8 +489,9 @@ namespace commander::manpage {
   // Assembly
   // -------------------------------------------------------------------------
 
-  inline std::vector<model::ManSection>
-  assemble(const model::Root &root) {
+  template <typename T>
+  std::vector<model::ManSection>
+  assemble(const T &root, const std::string &display_name) {
     std::map<std::string, model::ManSection> section_map;
     std::vector<std::string> section_names;
 
@@ -423,12 +506,12 @@ namespace commander::manpage {
     };
 
     // NAME
-    add_section(make_name_section(root.name, root.doc));
+    add_section(make_name_section(display_name, root.doc));
 
     // SYNOPSIS
     bool has_commands = root.commands.has_value() && !root.commands->empty();
     add_section(make_synopsis_section(
-        root.name, root.args.value_or(std::vector<model::Argument>{}), has_commands));
+        display_name, root.args.value_or(std::vector<model::Argument>{}), has_commands));
 
     // User-provided sections
     if (root.man.has_value() && root.man->sections.has_value()) {
@@ -479,6 +562,41 @@ namespace commander::manpage {
   }
 
   // -------------------------------------------------------------------------
+  // Subcommand lookup
+  // -------------------------------------------------------------------------
+
+  inline const model::Command &
+  find_command(const model::Root &root, const std::vector<std::string> &path) {
+    if (path.empty()) {
+      throw std::runtime_error("find_command: empty path");
+    }
+
+    const std::vector<model::Command> *commands =
+        root.commands.has_value() ? &*root.commands : nullptr;
+    const model::Command *current = nullptr;
+
+    for (const auto &segment : path) {
+      if (!commands) {
+        throw std::runtime_error("subcommand not found: " + segment);
+      }
+      bool found = false;
+      for (const auto &cmd : *commands) {
+        if (cmd.name == segment) {
+          current = &cmd;
+          commands = cmd.commands.has_value() ? &*cmd.commands : nullptr;
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        throw std::runtime_error("subcommand not found: " + segment);
+      }
+    }
+
+    return *current;
+  }
+
+  // -------------------------------------------------------------------------
   // Convenience: assemble + render
   // -------------------------------------------------------------------------
 
@@ -489,8 +607,69 @@ namespace commander::manpage {
       man_section = *root.man->section;
     }
     std::string version = root.version.value_or("");
-    auto sections = assemble(root);
+    auto sections = assemble(root, root.name);
     return groff::render_page(root.name, man_section, version, sections);
+  }
+
+  inline std::string
+  to_groff(const model::Command &cmd,
+           const std::string &full_name,
+           const std::string &version = "") {
+    int man_section = 1;
+    if (cmd.man.has_value() && cmd.man->section.has_value()) {
+      man_section = *cmd.man->section;
+    }
+    auto sections = assemble(cmd, full_name);
+    return groff::render_page(full_name, man_section, version, sections);
+  }
+
+  inline std::string
+  to_groff(const model::Root &root, const std::vector<std::string> &command_path) {
+    if (command_path.empty()) {
+      return to_groff(root);
+    }
+
+    std::string version = root.version.value_or("");
+    const auto &cmd = find_command(root, command_path);
+
+    std::string full_name = root.name;
+    for (const auto &segment : command_path) {
+      full_name += "-" + segment;
+    }
+
+    return to_groff(cmd, full_name, version);
+  }
+
+  // -------------------------------------------------------------------------
+  // Convenience: assemble + plain-text render
+  // -------------------------------------------------------------------------
+
+  inline std::string
+  to_plain_text(const model::Root &root) {
+    auto sections = assemble(root, root.name);
+    return plain::render_page(root.name, sections);
+  }
+
+  inline std::string
+  to_plain_text(const model::Command &cmd, const std::string &full_name) {
+    auto sections = assemble(cmd, full_name);
+    return plain::render_page(full_name, sections);
+  }
+
+  inline std::string
+  to_plain_text(const model::Root &root, const std::vector<std::string> &command_path) {
+    if (command_path.empty()) {
+      return to_plain_text(root);
+    }
+
+    const auto &cmd = find_command(root, command_path);
+
+    std::string full_name = root.name;
+    for (const auto &segment : command_path) {
+      full_name += "-" + segment;
+    }
+
+    return to_plain_text(cmd, full_name);
   }
 
 } // namespace commander::manpage

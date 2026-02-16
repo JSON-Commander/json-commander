@@ -1,17 +1,17 @@
-// greet — A simple CLI example using Commander.
+// fake-git — A schema-driven CLI example modeling git's porcelain interface.
 //
 // Demonstrates:
-//   - Building a model::Root with a flag and a positional
-//   - Compiling to cmd::RootSpec via cmd::make
-//   - Parsing argc/argv via parse::parse
-//   - Handling all three ParseResult variants
+//   - Nested subcommands (stash push, remote add, …)
+//   - Flag groups for mutually exclusive modes (--rebase/--no-rebase)
+//   - Repeated options (-c KEY=VALUE …)
+//   - Environment variable bindings (GIT_DIR, GIT_WORK_TREE)
+//   - Repeated positional arguments ([pathspec…])
 
 #include <commander/cmd.hpp>
 #include <commander/manpage.hpp>
 #include <commander/parse.hpp>
+#include <commander/schema_loader.hpp>
 
-#include <algorithm>
-#include <cctype>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -24,22 +24,8 @@ using namespace commander;
 
 model::Root
 make_cli() {
-  model::Flag loud;
-  loud.names = {"loud", "l"};
-  loud.doc = {"Print the greeting in uppercase."};
-
-  model::Positional name;
-  name.name = "name";
-  name.doc = {"The name to greet."};
-  name.type = model::ScalarType::String;
-  name.required = true;
-
-  model::Root root;
-  root.name = "greet";
-  root.doc = {"A friendly greeting tool."};
-  root.version = "1.0.0";
-  root.args = std::vector<model::Argument>{loud, name};
-  return root;
+  schema::Loader loader;
+  return loader.load(std::string(FAKEGIT_SCHEMA));
 }
 
 // ---------------------------------------------------------------------------
@@ -53,13 +39,7 @@ run(const std::vector<std::string> &args) {
   auto result = parse::parse(spec, args);
 
   if (auto *ok = std::get_if<parse::ParseOk>(&result)) {
-    std::string greeting = "Hello, " + ok->config["name"].get<std::string>() + "!";
-    if (ok->config["loud"].get<bool>()) {
-      std::transform(greeting.begin(), greeting.end(), greeting.begin(), [](unsigned char c) {
-        return static_cast<char>(std::toupper(c));
-      });
-    }
-    std::cout << greeting << "\n";
+    std::cout << ok->config.dump(2) << "\n";
     return 0;
   }
 
@@ -74,7 +54,7 @@ run(const std::vector<std::string> &args) {
   }
 
   if (std::holds_alternative<parse::VersionRequest>(result)) {
-    std::cout << "greet " << *cli.version << "\n";
+    std::cout << "fake-git version " << *cli.version << "\n";
     return 0;
   }
 
@@ -89,6 +69,9 @@ int
 main(int argc, char *argv[]) {
   try {
     return run({argv + 1, argv + argc});
+  } catch (const schema::Error &e) {
+    std::cerr << "schema error: " << e.what() << "\n";
+    return 1;
   } catch (const parse::Error &e) {
     std::cerr << "error: " << e.what() << "\n";
     return 1;

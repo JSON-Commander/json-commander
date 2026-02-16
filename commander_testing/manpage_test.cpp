@@ -1,5 +1,8 @@
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_string.hpp>
 #include <commander/manpage.hpp>
+
+#include <stdexcept>
 
 using namespace commander;
 using namespace commander::manpage;
@@ -431,7 +434,7 @@ TEST_CASE("assemble for minimal root produces NAME and SYNOPSIS", "[manpage]") {
   root.name = "mytool";
   root.doc = {"A test tool."};
 
-  auto sections = assemble(root);
+  auto sections = assemble(root, root.name);
   REQUIRE(sections.size() >= 2);
   REQUIRE(sections[0].name == "NAME");
   REQUIRE(sections[1].name == "SYNOPSIS");
@@ -447,7 +450,7 @@ TEST_CASE("assemble for root with args includes arg sections", "[manpage]") {
   flag.doc = {"Verbose output."};
   root.args = std::vector<model::Argument>{flag};
 
-  auto sections = assemble(root);
+  auto sections = assemble(root, root.name);
   bool has_options = false;
   for (const auto &s : sections) {
     if (s.name == "OPTIONS")
@@ -466,7 +469,7 @@ TEST_CASE("assemble for root with commands includes COMMANDS section", "[manpage
   cmd.doc = {"Build."};
   root.commands = std::vector<model::Command>{cmd};
 
-  auto sections = assemble(root);
+  auto sections = assemble(root, root.name);
   bool has_commands = false;
   for (const auto &s : sections) {
     if (s.name == "COMMANDS")
@@ -484,7 +487,7 @@ TEST_CASE("assemble for root with user sections interleaves them", "[manpage]") 
       {"DESCRIPTION", {model::ParagraphBlock{{"A longer description."}}}},
   };
 
-  auto sections = assemble(root);
+  auto sections = assemble(root, root.name);
   bool has_desc = false;
   for (const auto &s : sections) {
     if (s.name == "DESCRIPTION")
@@ -512,7 +515,7 @@ TEST_CASE("assemble for root with exits, envs, xrefs", "[manpage]") {
   root.man = model::Man{};
   root.man->xrefs = std::vector<model::ManXref>{{"git", 1}};
 
-  auto sections = assemble(root);
+  auto sections = assemble(root, root.name);
   bool has_exit = false;
   bool has_env = false;
   bool has_see = false;
@@ -557,6 +560,59 @@ TEST_CASE("to_groff for minimal root produces valid groff", "[manpage]") {
   REQUIRE(output.find(".SH SYNOPSIS") != std::string::npos);
   REQUIRE(output.find("mytool \\- A simple tool.") != std::string::npos);
 }
+
+// Helper: build a root with nested subcommands for Phase 9 tests
+namespace {
+
+model::Root
+make_test_root() {
+  model::Root root{};
+  root.name = "mytool";
+  root.doc = {"A test tool."};
+  root.version = "1.0.0";
+
+  model::Flag verbose{};
+  verbose.names = {"verbose"};
+  verbose.doc = {"Enable verbose output."};
+  root.args = std::vector<model::Argument>{verbose};
+
+  // Top-level command: build
+  model::Command build{};
+  build.name = "build";
+  build.doc = {"Build the project."};
+  model::Option jobs{};
+  jobs.names = {"jobs", "j"};
+  jobs.doc = {"Number of parallel jobs."};
+  jobs.type = model::ScalarType::Int;
+  jobs.docv = "N";
+  build.args = std::vector<model::Argument>{jobs};
+
+  // Top-level command: stash (with nested subcommands)
+  model::Command stash{};
+  stash.name = "stash";
+  stash.doc = {"Stash changes away."};
+
+  model::Command stash_push{};
+  stash_push.name = "push";
+  stash_push.doc = {"Save local modifications."};
+  model::Option msg{};
+  msg.names = {"m"};
+  msg.doc = {"Stash message."};
+  msg.type = model::ScalarType::String;
+  msg.docv = "MSG";
+  stash_push.args = std::vector<model::Argument>{msg};
+
+  model::Command stash_pop{};
+  stash_pop.name = "pop";
+  stash_pop.doc = {"Apply and remove stash."};
+
+  stash.commands = std::vector<model::Command>{stash_push, stash_pop};
+
+  root.commands = std::vector<model::Command>{build, stash};
+  return root;
+}
+
+} // namespace
 
 TEST_CASE("to_groff for realistic root produces complete man page", "[manpage]") {
   model::Root root{};
@@ -626,4 +682,186 @@ TEST_CASE("to_groff for realistic root produces complete man page", "[manpage]")
   REQUIRE(options_pos < exit_pos);
   REQUIRE(exit_pos < env_pos);
   REQUIRE(env_pos < see_pos);
+}
+
+// ---------------------------------------------------------------------------
+// Phase 9: Subcommand man page generation
+// ---------------------------------------------------------------------------
+
+TEST_CASE("to_groff for Command produces groff with given full name in .TH", "[manpage]") {
+  model::Command cmd{};
+  cmd.name = "build";
+  cmd.doc = {"Build the project."};
+  model::Option jobs{};
+  jobs.names = {"jobs", "j"};
+  jobs.doc = {"Number of parallel jobs."};
+  jobs.type = model::ScalarType::Int;
+  jobs.docv = "N";
+  cmd.args = std::vector<model::Argument>{jobs};
+
+  auto output = to_groff(cmd, "mytool-build", "1.0.0");
+  REQUIRE(output.find(".TH") == 0);
+  REQUIRE(output.find("MYTOOL-BUILD") != std::string::npos);
+  REQUIRE(output.find(".SH NAME") != std::string::npos);
+  REQUIRE(output.find("mytool-build") != std::string::npos);
+  REQUIRE(output.find(".SH OPTIONS") != std::string::npos);
+}
+
+TEST_CASE("to_groff(root, {}) produces same output as to_groff(root)", "[manpage]") {
+  auto root = make_test_root();
+  auto by_root = to_groff(root);
+  auto by_path = to_groff(root, std::vector<std::string>{});
+  REQUIRE(by_root == by_path);
+}
+
+TEST_CASE("to_groff(root, {\"build\"}) produces man page titled MYTOOL-BUILD", "[manpage]") {
+  auto root = make_test_root();
+  auto output = to_groff(root, {"build"});
+  REQUIRE(output.find(".TH") == 0);
+  REQUIRE(output.find("MYTOOL-BUILD") != std::string::npos);
+  REQUIRE(output.find(".SH NAME") != std::string::npos);
+  REQUIRE(output.find("mytool-build \\- Build the project.") != std::string::npos);
+  REQUIRE(output.find(".SH OPTIONS") != std::string::npos);
+}
+
+TEST_CASE("to_groff(root, {\"nonexistent\"}) throws runtime_error", "[manpage]") {
+  auto root = make_test_root();
+  REQUIRE_THROWS_AS(to_groff(root, {"nonexistent"}), std::runtime_error);
+}
+
+TEST_CASE("to_groff(root, {\"stash\", \"push\"}) resolves nested subcommand", "[manpage]") {
+  auto root = make_test_root();
+  auto output = to_groff(root, {"stash", "push"});
+  REQUIRE(output.find(".TH") == 0);
+  REQUIRE(output.find("MYTOOL-STASH-PUSH") != std::string::npos);
+  REQUIRE(output.find("mytool-stash-push \\- Save local modifications.") != std::string::npos);
+}
+
+// ---------------------------------------------------------------------------
+// Phase 10: Plain-text renderer
+// ---------------------------------------------------------------------------
+
+TEST_CASE("plain::unescape strips groff font codes", "[manpage][plain]") {
+  REQUIRE(plain::unescape("\\fBbold\\fR") == "bold");
+  REQUIRE(plain::unescape("\\fIitalic\\fR") == "italic");
+  REQUIRE(plain::unescape("\\fBbold\\fR and \\fIitalic\\fR") == "bold and italic");
+}
+
+TEST_CASE("plain::unescape converts groff hyphen to plain hyphen", "[manpage][plain]") {
+  REQUIRE(plain::unescape("\\-\\-verbose") == "--verbose");
+  REQUIRE(plain::unescape("\\-v") == "-v");
+}
+
+TEST_CASE("plain::unescape strips zero-width space", "[manpage][plain]") {
+  REQUIRE(plain::unescape("\\&.TH") == ".TH");
+}
+
+TEST_CASE("plain::unescape converts escaped backslash", "[manpage][plain]") {
+  REQUIRE(plain::unescape("a\\\\b") == "a\\b");
+}
+
+TEST_CASE("plain::unescape passes through plain text unchanged", "[manpage][plain]") {
+  REQUIRE(plain::unescape("hello world") == "hello world");
+  REQUIRE(plain::unescape("") == "");
+}
+
+TEST_CASE("plain::render_block ParagraphBlock produces indented text", "[manpage][plain]") {
+  model::ParagraphBlock block{{"Hello world."}};
+  REQUIRE(plain::render_block(block) == "       Hello world.\n");
+}
+
+TEST_CASE("plain::render_block ParagraphBlock unescapes groff codes", "[manpage][plain]") {
+  model::ParagraphBlock block{{"Use \\fB\\-\\-verbose\\fR for details."}};
+  REQUIRE(plain::render_block(block) == "       Use --verbose for details.\n");
+}
+
+TEST_CASE("plain::render_block ParagraphBlock with multi-line doc", "[manpage][plain]") {
+  model::ParagraphBlock block{{"first line", "second line"}};
+  REQUIRE(plain::render_block(block) == "       first line second line\n");
+}
+
+TEST_CASE("plain::render_block LabelTextBlock produces label and indented description",
+          "[manpage][plain]") {
+  model::LabelTextBlock block{"\\fB\\-\\-verbose\\fR, \\fB\\-v\\fR",
+                              {"Enable verbose output."}};
+  std::string expected = "       --verbose, -v\n"
+                         "           Enable verbose output.\n";
+  REQUIRE(plain::render_block(block) == expected);
+}
+
+TEST_CASE("plain::render_block PreBlock preserves lines with indentation", "[manpage][plain]") {
+  model::PreBlock block{{"line one", "line two"}};
+  std::string expected = "       line one\n"
+                         "       line two\n";
+  REQUIRE(plain::render_block(block) == expected);
+}
+
+TEST_CASE("plain::render_block NoBlankBlock produces empty string", "[manpage][plain]") {
+  model::NoBlankBlock block{};
+  REQUIRE(plain::render_block(block) == "");
+}
+
+TEST_CASE("plain::render_section produces header and blocks", "[manpage][plain]") {
+  model::ManSection section{
+      "OPTIONS",
+      {model::LabelTextBlock{"\\fB\\-\\-verbose\\fR", {"Be verbose."}}},
+  };
+  auto output = plain::render_section(section);
+  REQUIRE(output.find("OPTIONS\n") == 0);
+  REQUIRE(output.find("       --verbose\n") != std::string::npos);
+  REQUIRE(output.find("           Be verbose.\n") != std::string::npos);
+}
+
+TEST_CASE("to_plain_text(root) produces readable output with all sections", "[manpage][plain]") {
+  model::Root root{};
+  root.name = "mytool";
+  root.doc = {"A simple tool."};
+  root.version = "1.0.0";
+
+  model::Flag flag{};
+  flag.names = {"v", "verbose"};
+  flag.doc = {"Enable verbose output."};
+
+  model::Positional pos{};
+  pos.name = "file";
+  pos.doc = {"Input file."};
+  pos.type = model::ScalarType::File;
+
+  root.args = std::vector<model::Argument>{flag, pos};
+
+  auto output = to_plain_text(root);
+
+  // Should contain section headers without groff markup
+  REQUIRE(output.find("NAME\n") != std::string::npos);
+  REQUIRE(output.find("SYNOPSIS\n") != std::string::npos);
+  REQUIRE(output.find("OPTIONS\n") != std::string::npos);
+  REQUIRE(output.find("ARGUMENTS\n") != std::string::npos);
+
+  // Should NOT contain groff codes
+  REQUIRE(output.find("\\fB") == std::string::npos);
+  REQUIRE(output.find("\\fR") == std::string::npos);
+  REQUIRE(output.find("\\fI") == std::string::npos);
+  REQUIRE(output.find(".TH") == std::string::npos);
+  REQUIRE(output.find(".SH") == std::string::npos);
+  REQUIRE(output.find(".PP") == std::string::npos);
+  REQUIRE(output.find(".TP") == std::string::npos);
+
+  // Should contain readable content
+  REQUIRE(output.find("mytool") != std::string::npos);
+  REQUIRE(output.find("A simple tool.") != std::string::npos);
+}
+
+TEST_CASE("to_plain_text(root, {\"build\"}) produces subcommand output", "[manpage][plain]") {
+  auto root = make_test_root();
+  auto output = to_plain_text(root, {"build"});
+
+  REQUIRE(output.find("NAME\n") != std::string::npos);
+  REQUIRE(output.find("mytool-build") != std::string::npos);
+  REQUIRE(output.find("Build the project.") != std::string::npos);
+  REQUIRE(output.find("OPTIONS\n") != std::string::npos);
+
+  // No groff codes
+  REQUIRE(output.find("\\fB") == std::string::npos);
+  REQUIRE(output.find("\\fR") == std::string::npos);
+  REQUIRE(output.find(".TH") == std::string::npos);
 }

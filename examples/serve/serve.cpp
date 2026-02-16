@@ -51,13 +51,13 @@ run(const std::vector<std::string> &args) {
     return 0;
   }
 
-  if (std::holds_alternative<parse::HelpRequest>(result)) {
-    std::cout << "Usage: serve [--port PORT] [--host ADDR] [--verbose] [DIR]\n";
+  if (auto *help = std::get_if<parse::HelpRequest>(&result)) {
+    std::cout << manpage::to_plain_text(cli, help->command_path);
     return 0;
   }
 
-  if (std::holds_alternative<parse::ManpageRequest>(result)) {
-    std::cout << manpage::to_groff(cli);
+  if (auto *man = std::get_if<parse::ManpageRequest>(&result)) {
+    std::cout << manpage::to_groff(cli, man->command_path);
     return 0;
   }
 
