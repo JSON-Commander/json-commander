@@ -7,6 +7,7 @@
 //   - Catching schema::Error alongside parse::Error
 
 #include <commander/cmd.hpp>
+#include <commander/manpage.hpp>
 #include <commander/parse.hpp>
 #include <commander/schema_loader.hpp>
 
@@ -52,6 +53,11 @@ run(const std::vector<std::string> &args) {
 
   if (std::holds_alternative<parse::HelpRequest>(result)) {
     std::cout << "Usage: serve [--port PORT] [--host ADDR] [--verbose] [DIR]\n";
+    return 0;
+  }
+
+  if (std::holds_alternative<parse::ManpageRequest>(result)) {
+    std::cout << manpage::to_groff(cli);
     return 0;
   }
 

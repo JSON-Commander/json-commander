@@ -56,6 +56,7 @@ namespace commander::manpage {
         if (i > 0) {
           result += ", ";
         }
+        std::string prefix = (names[i].size() == 1) ? "\\-" : "\\-\\-";
         std::string escaped;
         for (char c : names[i]) {
           if (c == '-') {
@@ -64,7 +65,7 @@ namespace commander::manpage {
             escaped += c;
           }
         }
-        result += "\\fB" + escaped + "\\fR";
+        result += "\\fB" + prefix + escaped + "\\fR";
       }
       return result;
     }
@@ -80,7 +81,7 @@ namespace commander::manpage {
       std::string docv = opt.docv.value_or(type_docv(opt.type, opt.choices));
       if (opt.names.size() == 1) {
         const auto &name = opt.names[0];
-        bool is_short = (name.size() == 2 && name[0] == '-' && name[1] != '-');
+        bool is_short = (name.size() == 1);
         std::string sep = is_short ? " " : "=";
         return format_names(opt.names) + sep + "\\fI" + docv + "\\fR";
       }
@@ -90,7 +91,8 @@ namespace commander::manpage {
           result += ", ";
         }
         const auto &name = opt.names[i];
-        bool is_short = (name.size() == 2 && name[0] == '-' && name[1] != '-');
+        bool is_short = (name.size() == 1);
+        std::string prefix = is_short ? "\\-" : "\\-\\-";
         std::string escaped;
         for (char c : name) {
           if (c == '-') {
@@ -100,7 +102,7 @@ namespace commander::manpage {
           }
         }
         std::string sep = is_short ? " " : "=";
-        result += "\\fB" + escaped + "\\fR" + sep + "\\fI" + docv + "\\fR";
+        result += "\\fB" + prefix + escaped + "\\fR" + sep + "\\fI" + docv + "\\fR";
       }
       return result;
     }
@@ -157,7 +159,7 @@ namespace commander::manpage {
           [](const auto &b) -> std::string {
             using T = std::decay_t<decltype(b)>;
             if constexpr (std::is_same_v<T, model::ParagraphBlock>) {
-              return ".PP\n" + escape(detail::docstring_to_text(b.paragraph)) + "\n";
+              return ".PP\n" + detail::docstring_to_text(b.paragraph) + "\n";
             } else if constexpr (std::is_same_v<T, model::PreBlock>) {
               std::string result = ".nf\n";
               for (const auto &line : b.pre) {

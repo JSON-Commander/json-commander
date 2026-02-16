@@ -7,6 +7,7 @@
 //   - Handling all three ParseResult variants
 
 #include <commander/cmd.hpp>
+#include <commander/manpage.hpp>
 #include <commander/parse.hpp>
 
 #include <algorithm>
@@ -64,6 +65,11 @@ run(const std::vector<std::string> &args) {
 
   if (std::holds_alternative<parse::HelpRequest>(result)) {
     std::cout << "Usage: greet [--loud] <name>\n";
+    return 0;
+  }
+
+  if (std::holds_alternative<parse::ManpageRequest>(result)) {
+    std::cout << manpage::to_groff(cli);
     return 0;
   }
 

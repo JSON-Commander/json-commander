@@ -38,7 +38,11 @@ namespace commander::parse {
 
   struct VersionRequest {};
 
-  using ParseResult = std::variant<ParseOk, HelpRequest, VersionRequest>;
+  struct ManpageRequest {
+    std::vector<std::string> command_path;
+  };
+
+  using ParseResult = std::variant<ParseOk, HelpRequest, VersionRequest, ManpageRequest>;
 
   // -------------------------------------------------------------------------
   // Environment lookup
@@ -177,7 +181,7 @@ namespace commander::parse {
       std::size_t next_pos;
     };
 
-    using LevelResult = std::variant<LevelOk, HelpRequest, VersionRequest>;
+    using LevelResult = std::variant<LevelOk, HelpRequest, VersionRequest, ManpageRequest>;
 
     inline LevelResult
     parse_level(const std::vector<arg::ArgSpec> &args,
@@ -220,6 +224,11 @@ namespace commander::parse {
           // Check for --help
           if (token == "--help") {
             return HelpRequest{command_path};
+          }
+
+          // Check for --help-man
+          if (token == "--help-man") {
+            return ManpageRequest{command_path};
           }
 
           // Check for --version at root
@@ -383,6 +392,13 @@ namespace commander::parse {
                   full_path.push_back(std::move(p));
                 }
                 return HelpRequest{std::move(full_path)};
+              }
+              if (auto *manpage = std::get_if<ManpageRequest>(&sub_result)) {
+                std::vector<std::string> full_path = command_path;
+                for (auto &p : manpage->command_path) {
+                  full_path.push_back(std::move(p));
+                }
+                return ManpageRequest{std::move(full_path)};
               }
               if (std::holds_alternative<VersionRequest>(sub_result)) {
                 return VersionRequest{};
@@ -596,6 +612,9 @@ namespace commander::parse {
 
     if (auto *help = std::get_if<HelpRequest>(&level_result)) {
       return std::move(*help);
+    }
+    if (auto *manpage = std::get_if<ManpageRequest>(&level_result)) {
+      return std::move(*manpage);
     }
     if (std::holds_alternative<VersionRequest>(level_result)) {
       return VersionRequest{};

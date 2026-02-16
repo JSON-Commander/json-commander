@@ -43,6 +43,13 @@ TEST_CASE("ParseResult holds VersionRequest", "[parse][phase1]") {
   REQUIRE(std::holds_alternative<parse::VersionRequest>(result));
 }
 
+TEST_CASE("ParseResult holds ManpageRequest", "[parse][phase1]") {
+  parse::ParseResult result = parse::ManpageRequest{{"sub"}};
+  REQUIRE(std::holds_alternative<parse::ManpageRequest>(result));
+  REQUIRE(std::get<parse::ManpageRequest>(result).command_path ==
+          std::vector<std::string>{"sub"});
+}
+
 TEST_CASE("no_env always returns nullopt", "[parse][phase1]") {
   auto env = parse::no_env();
   REQUIRE_FALSE(env("HOME").has_value());
@@ -761,6 +768,45 @@ TEST_CASE("parse: --help short-circuits (no validation)", "[parse][phase10]") {
   REQUIRE(std::holds_alternative<parse::HelpRequest>(result));
 }
 
+TEST_CASE("parse: --help-man returns ManpageRequest with empty path", "[parse][phase10]") {
+  auto root = make_root("tool");
+  auto result = parse::parse(root, {"--help-man"}, parse::no_env());
+  REQUIRE(std::holds_alternative<parse::ManpageRequest>(result));
+  REQUIRE(std::get<parse::ManpageRequest>(result).command_path.empty());
+}
+
+TEST_CASE("parse: --help-man after subcommand returns ManpageRequest with path",
+          "[parse][phase10]") {
+  auto root = make_root("tool");
+  root.commands = {make_command("build")};
+  auto result = parse::parse(root, {"build", "--help-man"}, parse::no_env());
+  REQUIRE(std::holds_alternative<parse::ManpageRequest>(result));
+  REQUIRE(std::get<parse::ManpageRequest>(result).command_path ==
+          std::vector<std::string>{"build"});
+}
+
+TEST_CASE("parse: --help-man short-circuits (no validation)", "[parse][phase10]") {
+  auto root = make_root("tool");
+  auto opt = make_option({"required-opt"});
+  opt.validator = validate::required();
+  root.args = {arg::ArgSpec{opt}};
+  // Without --help-man this would fail validation (required option missing)
+  auto result = parse::parse(root, {"--help-man"}, parse::no_env());
+  REQUIRE(std::holds_alternative<parse::ManpageRequest>(result));
+}
+
+TEST_CASE("parse: --help-man in nested subcommand propagates full path", "[parse][phase10]") {
+  auto root = make_root("tool");
+  auto set_cmd = make_command("set");
+  auto config_cmd = make_command("config");
+  config_cmd.commands = {set_cmd};
+  root.commands = {config_cmd};
+  auto result = parse::parse(root, {"config", "set", "--help-man"}, parse::no_env());
+  REQUIRE(std::holds_alternative<parse::ManpageRequest>(result));
+  REQUIRE(std::get<parse::ManpageRequest>(result).command_path ==
+          std::vector<std::string>{"config", "set"});
+}
+
 // ===========================================================================
 // Phase 11: Environment Variable Fallback
 // ===========================================================================
@@ -1036,6 +1082,18 @@ TEST_CASE("integration: --help on subcommand", "[parse][phase13]") {
   auto result = parse::parse(root, {"build", "--help"}, parse::no_env());
   REQUIRE(std::holds_alternative<parse::HelpRequest>(result));
   REQUIRE(std::get<parse::HelpRequest>(result).command_path ==
+          std::vector<std::string>{"build"});
+}
+
+TEST_CASE("integration: --help-man on subcommand", "[parse][phase13]") {
+  auto sub = make_command("build");
+  sub.args = {arg::ArgSpec{make_option({"target"})}};
+  auto root = make_root("tool");
+  root.commands = {sub};
+
+  auto result = parse::parse(root, {"build", "--help-man"}, parse::no_env());
+  REQUIRE(std::holds_alternative<parse::ManpageRequest>(result));
+  REQUIRE(std::get<parse::ManpageRequest>(result).command_path ==
           std::vector<std::string>{"build"});
 }
 

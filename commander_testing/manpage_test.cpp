@@ -82,7 +82,7 @@ TEST_CASE("render_section produces .SH header and rendered blocks", "[manpage]")
       "NAME",
       {model::ParagraphBlock{{"mytool \\- a test tool"}}},
   };
-  REQUIRE(groff::render_section(section) == ".SH NAME\n.PP\nmytool \\\\- a test tool\n");
+  REQUIRE(groff::render_section(section) == ".SH NAME\n.PP\nmytool \\- a test tool\n");
 }
 
 // ---------------------------------------------------------------------------
@@ -90,23 +90,23 @@ TEST_CASE("render_section produces .SH header and rendered blocks", "[manpage]")
 // ---------------------------------------------------------------------------
 
 TEST_CASE("format_names single long name", "[manpage]") {
-  model::ArgNames names = {"--verbose"};
+  model::ArgNames names = {"verbose"};
   REQUIRE(detail::format_names(names) == "\\fB\\-\\-verbose\\fR");
 }
 
 TEST_CASE("format_names single short name", "[manpage]") {
-  model::ArgNames names = {"-v"};
+  model::ArgNames names = {"v"};
   REQUIRE(detail::format_names(names) == "\\fB\\-v\\fR");
 }
 
 TEST_CASE("format_names short and long", "[manpage]") {
-  model::ArgNames names = {"-v", "--verbose"};
+  model::ArgNames names = {"v", "verbose"};
   REQUIRE(detail::format_names(names) == "\\fB\\-v\\fR, \\fB\\-\\-verbose\\fR");
 }
 
 TEST_CASE("format_option_label with explicit docv", "[manpage]") {
   model::Option opt{};
-  opt.names = {"--count"};
+  opt.names = {"count"};
   opt.doc = {"A count."};
   opt.type = model::ScalarType::Int;
   opt.docv = "COUNT";
@@ -115,7 +115,7 @@ TEST_CASE("format_option_label with explicit docv", "[manpage]") {
 
 TEST_CASE("format_option_label without docv uses converter docv", "[manpage]") {
   model::Option opt{};
-  opt.names = {"--count"};
+  opt.names = {"count"};
   opt.doc = {"A count."};
   opt.type = model::ScalarType::Int;
   REQUIRE(detail::format_option_label(opt) == "\\fB\\-\\-count\\fR=\\fIINT\\fR");
@@ -123,7 +123,7 @@ TEST_CASE("format_option_label without docv uses converter docv", "[manpage]") {
 
 TEST_CASE("format_option_label short and long with docv", "[manpage]") {
   model::Option opt{};
-  opt.names = {"-c", "--count"};
+  opt.names = {"c", "count"};
   opt.doc = {"A count."};
   opt.type = model::ScalarType::Int;
   opt.docv = "COUNT";
@@ -150,7 +150,7 @@ TEST_CASE("format_positional_label with custom docv", "[manpage]") {
 
 TEST_CASE("format_flag_group_entry_label formats like flag names", "[manpage]") {
   model::FlagGroupEntry entry{
-      {"-q", "--quiet"},
+      {"q", "quiet"},
       {"Be quiet."},
       nlohmann::json(true),
   };
@@ -164,7 +164,7 @@ TEST_CASE("format_flag_group_entry_label formats like flag names", "[manpage]") 
 
 TEST_CASE("make_arg_sections for single flag produces OPTIONS section", "[manpage]") {
   model::Flag flag{};
-  flag.names = {"-v", "--verbose"};
+  flag.names = {"v", "verbose"};
   flag.doc = {"Enable verbose output."};
 
   std::vector<model::Argument> args = {flag};
@@ -177,7 +177,7 @@ TEST_CASE("make_arg_sections for single flag produces OPTIONS section", "[manpag
 
 TEST_CASE("make_arg_sections for single option produces OPTIONS section", "[manpage]") {
   model::Option opt{};
-  opt.names = {"--count"};
+  opt.names = {"count"};
   opt.doc = {"A count."};
   opt.type = model::ScalarType::Int;
   opt.docv = "COUNT";
@@ -209,8 +209,8 @@ TEST_CASE("make_arg_sections for flag group produces one entry per flag", "[manp
   group.doc = {"Set level."};
   group.default_value = "normal";
   group.flags = {
-      model::FlagGroupEntry{{"-q", "--quiet"}, {"Be quiet."}, nlohmann::json("quiet")},
-      model::FlagGroupEntry{{"--loud"}, {"Be loud."}, nlohmann::json("loud")},
+      model::FlagGroupEntry{{"q", "quiet"}, {"Be quiet."}, nlohmann::json("quiet")},
+      model::FlagGroupEntry{{"loud"}, {"Be loud."}, nlohmann::json("loud")},
   };
 
   std::vector<model::Argument> args = {group};
@@ -223,7 +223,7 @@ TEST_CASE("make_arg_sections for flag group produces one entry per flag", "[manp
 
 TEST_CASE("make_arg_sections groups by docs field", "[manpage]") {
   model::Flag flag{};
-  flag.names = {"--verbose"};
+  flag.names = {"verbose"};
   flag.doc = {"Verbose."};
 
   model::Positional pos{};
@@ -250,7 +250,7 @@ TEST_CASE("make_arg_sections groups by docs field", "[manpage]") {
 
 TEST_CASE("make_arg_sections with custom docs field", "[manpage]") {
   model::Flag flag{};
-  flag.names = {"--debug"};
+  flag.names = {"debug"};
   flag.doc = {"Debug mode."};
   flag.docs = "DEBUGGING";
 
@@ -276,7 +276,7 @@ TEST_CASE("make_name_section produces NAME with name and doc", "[manpage]") {
 
 TEST_CASE("make_synopsis_section for command with options only", "[manpage]") {
   model::Option opt{};
-  opt.names = {"--verbose"};
+  opt.names = {"verbose"};
   opt.doc = {"Verbose."};
   opt.type = model::ScalarType::Bool;
 
@@ -317,7 +317,7 @@ TEST_CASE("make_synopsis_section for command with subcommands", "[manpage]") {
 
 TEST_CASE("make_synopsis_section for command with options and subcommands", "[manpage]") {
   model::Flag flag{};
-  flag.names = {"--verbose"};
+  flag.names = {"verbose"};
   flag.doc = {"Verbose."};
 
   std::vector<model::Argument> args = {flag};
@@ -443,7 +443,7 @@ TEST_CASE("assemble for root with args includes arg sections", "[manpage]") {
   root.doc = {"A test tool."};
 
   model::Flag flag{};
-  flag.names = {"--verbose"};
+  flag.names = {"verbose"};
   flag.doc = {"Verbose output."};
   root.args = std::vector<model::Argument>{flag};
 
@@ -555,7 +555,7 @@ TEST_CASE("to_groff for minimal root produces valid groff", "[manpage]") {
   REQUIRE(output.find("MYTOOL") != std::string::npos);
   REQUIRE(output.find(".SH NAME") != std::string::npos);
   REQUIRE(output.find(".SH SYNOPSIS") != std::string::npos);
-  REQUIRE(output.find("mytool \\\\- A simple tool.") != std::string::npos);
+  REQUIRE(output.find("mytool \\- A simple tool.") != std::string::npos);
 }
 
 TEST_CASE("to_groff for realistic root produces complete man page", "[manpage]") {
@@ -565,11 +565,11 @@ TEST_CASE("to_groff for realistic root produces complete man page", "[manpage]")
   root.version = "2.0.0";
 
   model::Flag flag{};
-  flag.names = {"-v", "--verbose"};
+  flag.names = {"v", "verbose"};
   flag.doc = {"Enable verbose output."};
 
   model::Option opt{};
-  opt.names = {"-o", "--output"};
+  opt.names = {"o", "output"};
   opt.doc = {"Output file."};
   opt.type = model::ScalarType::File;
   opt.docv = "FILE";
