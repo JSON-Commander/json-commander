@@ -1,43 +1,43 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(commander VERSION 0.1.0 LANGUAGES C CXX)
+project(json-commander VERSION 0.1.0 LANGUAGES C CXX)
 
-option(commander_BUILD_TESTING "Build the commander tests" ON)
-option(commander_BUILD_EXAMPLES "Build the commander examples" ON)
-option(commander_BUILD_TOOLS "Build the commander tools" ON)
-set(commander_CXX_STANDARD 20 CACHE STRING "C++ standard for commander")
+option(json_commander_BUILD_TESTING "Build the json-commander tests" ON)
+option(json_commander_BUILD_EXAMPLES "Build the json-commander examples" ON)
+option(json_commander_BUILD_TOOLS "Build the json-commander tools" ON)
+set(json_commander_CXX_STANDARD 20 CACHE STRING "C++ standard for json-commander")
 
 include(GNUInstallDirs)
-set(commander_INSTALL_BINDIR ${CMAKE_INSTALL_BINDIR})
-set(commander_INSTALL_LIBDIR ${CMAKE_INSTALL_LIBDIR})
-set(commander_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR})
-set(commander_INSTALL_CONFDIR ${commander_INSTALL_LIBDIR}/cmake/commander-${PROJECT_VERSION})
+set(json_commander_INSTALL_BINDIR ${CMAKE_INSTALL_BINDIR})
+set(json_commander_INSTALL_LIBDIR ${CMAKE_INSTALL_LIBDIR})
+set(json_commander_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR})
+set(json_commander_INSTALL_CONFDIR ${json_commander_INSTALL_LIBDIR}/cmake/json-commander-${PROJECT_VERSION})
 
 list(INSERT CMAKE_MODULE_PATH 0 ${PROJECT_SOURCE_DIR}/cmake)
-include(commander_deps)
+include(json_commander_deps)
 
-add_subdirectory(commander)
+add_subdirectory(json_commander)
 
-if(commander_BUILD_TESTING)
+if(json_commander_BUILD_TESTING)
   include(CTest)
   if(BUILD_TESTING)
-    add_subdirectory(commander_testing)
+    add_subdirectory(json_commander_testing)
   endif()
 endif()
 
-if(commander_BUILD_EXAMPLES)
+if(json_commander_BUILD_EXAMPLES)
   add_subdirectory(examples)
 endif()
 
-if(commander_BUILD_TOOLS)
+if(json_commander_BUILD_TOOLS)
   add_subdirectory(tools)
 endif()
 
-install(EXPORT commander_EXPORTS
-  NAMESPACE commander::
-  FILE commander-exports.cmake
-  DESTINATION ${commander_INSTALL_CONFDIR})
+install(EXPORT json_commander_EXPORTS
+  NAMESPACE json_commander::
+  FILE json-commander-exports.cmake
+  DESTINATION ${json_commander_INSTALL_CONFDIR})
 
-configure_file(commander-config.cmake.in commander-config.cmake)
-install(FILES ${PROJECT_BINARY_DIR}/commander-config.cmake
-  DESTINATION ${commander_INSTALL_CONFDIR})
+configure_file(json-commander-config.cmake.in json-commander-config.cmake)
+install(FILES ${PROJECT_BINARY_DIR}/json-commander-config.cmake
+  DESTINATION ${json_commander_INSTALL_CONFDIR})

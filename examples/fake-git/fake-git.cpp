@@ -7,16 +7,16 @@
 //   - Environment variable bindings (GIT_DIR, GIT_WORK_TREE)
 //   - Repeated positional arguments ([pathspec…])
 
-#include <commander/cmd.hpp>
-#include <commander/manpage.hpp>
-#include <commander/parse.hpp>
-#include <commander/schema_loader.hpp>
+#include <json_commander/cmd.hpp>
+#include <json_commander/manpage.hpp>
+#include <json_commander/parse.hpp>
+#include <json_commander/schema_loader.hpp>
 
 #include <iostream>
 #include <string>
 #include <vector>
 
-using namespace commander;
+using namespace json_commander;
 
 // ---------------------------------------------------------------------------
 // CLI definition

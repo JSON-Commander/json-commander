@@ -1,6 +1,6 @@
 #pragma once
 
-#include <commander/cmd.hpp>
+#include <json_commander/cmd.hpp>
 #include <nlohmann/json.hpp>
 
 #include <cstdlib>
@@ -12,7 +12,7 @@
 #include <variant>
 #include <vector>
 
-namespace commander::parse {
+namespace json_commander::parse {
 
   // -------------------------------------------------------------------------
   // Error type
@@ -626,4 +626,4 @@ namespace commander::parse {
     return ParseOk{std::move(ok.config), std::move(ok.command_path)};
   }
 
-} // namespace commander::parse
+} // namespace json_commander::parse

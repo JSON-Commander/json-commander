@@ -1,11 +1,11 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
-#include <commander/manpage.hpp>
+#include <json_commander/manpage.hpp>
 
 #include <stdexcept>
 
-using namespace commander;
-using namespace commander::manpage;
+using namespace json_commander;
+using namespace json_commander::manpage;
 
 // ---------------------------------------------------------------------------
 // Phase 1: Groff escape and DocString rendering

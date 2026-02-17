@@ -1,8 +1,8 @@
 #pragma once
 
-#include <commander/conv.hpp>
-#include <commander/model.hpp>
-#include <commander/validate.hpp>
+#include <json_commander/conv.hpp>
+#include <json_commander/model.hpp>
+#include <json_commander/validate.hpp>
 #include <nlohmann/json.hpp>
 
 #include <optional>
@@ -10,7 +10,7 @@
 #include <variant>
 #include <vector>
 
-namespace commander::arg {
+namespace json_commander::arg {
 
   // -------------------------------------------------------------------------
   // Spec types
@@ -174,4 +174,4 @@ namespace commander::arg {
     return specs;
   }
 
-} // namespace commander::arg
+} // namespace json_commander::arg

@@ -12,6 +12,9 @@ RELEASE*/
 [xX]64*/
 doc/
 
+# notes
+*.org
+
 # other directories
 DataBinding/
 Asm/

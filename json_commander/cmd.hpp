@@ -1,12 +1,12 @@
 #pragma once
 
-#include <commander/arg.hpp>
+#include <json_commander/arg.hpp>
 
 #include <optional>
 #include <string>
 #include <vector>
 
-namespace commander::cmd {
+namespace json_commander::cmd {
 
   // -------------------------------------------------------------------------
   // Spec types
@@ -71,4 +71,4 @@ namespace commander::cmd {
     };
   }
 
-} // namespace commander::cmd
+} // namespace json_commander::cmd

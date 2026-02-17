@@ -1,10 +1,10 @@
-# Commander
+# JSON-Commander
 
 A C++20 library for defining command line interfaces via JSON schemas.
 
 Inspired by OCaml's [cmdliner](https://erratique.ch/software/cmdliner),
-Commander takes a declarative approach: describe your CLI as a JSON schema,
-and Commander handles argument parsing, environment variable fallback,
+JSON-Commander takes a declarative approach: describe your CLI as a JSON schema,
+and JSON-Commander handles argument parsing, environment variable fallback,
 configuration file merging, man page generation, and runtime configuration
 output.
 
@@ -20,7 +20,7 @@ output.
   plain-text help for `--help`
 - **Config schema generation** -- emit a JSON Schema (draft 2020-12)
   describing the runtime configuration output
-- **Schema validation** -- validate CLI schemas against the commander
+- **Schema validation** -- validate CLI schemas against the json-commander
   metaschema before use
 - **Unified JSON output** -- parsing produces a flat JSON object ready for
   application consumption
@@ -31,13 +31,13 @@ Define your CLI as a `model::Root`, compile it, parse arguments, and use the
 resulting JSON configuration:
 
 ```cpp
-#include <commander/cmd.hpp>
-#include <commander/manpage.hpp>
-#include <commander/parse.hpp>
+#include <json_commander/cmd.hpp>
+#include <json_commander/manpage.hpp>
+#include <json_commander/parse.hpp>
 
 #include <iostream>
 
-using namespace commander;
+using namespace json_commander;
 
 model::Root make_cli() {
   model::Flag loud;
@@ -104,22 +104,22 @@ CLIs can also be defined as JSON files and loaded at runtime via
 }
 ```
 
-## Commander CLI Tool
+## JSON-Commander CLI Tool
 
-Commander ships with a `commander` tool that dogfoods the library:
+JSON-Commander ships with a `json-commander` tool that dogfoods the library:
 
 ```sh
-commander validate schema.json          # Validate a schema
-commander help schema.json              # Print plain-text help
-commander man schema.json               # Generate groff man page
-commander man schema.json commit        # Man page for a subcommand
-commander config-schema schema.json     # Generate runtime config JSON Schema
-commander parse schema.json -- --loud Alice  # Parse args, output JSON
+json-commander validate schema.json          # Validate a schema
+json-commander help schema.json              # Print plain-text help
+json-commander man schema.json               # Generate groff man page
+json-commander man schema.json commit        # Man page for a subcommand
+json-commander config-schema schema.json     # Generate runtime config JSON Schema
+json-commander parse schema.json -- --loud Alice  # Parse args, output JSON
 ```
 
 ## Building
 
-Commander uses CMake with Ninja Multi-Config. Dependencies are fetched
+JSON-Commander uses CMake with Ninja Multi-Config. Dependencies are fetched
 automatically via FetchContent.
 
 ```sh
@@ -157,8 +157,8 @@ Managed via FetchContent through the `cmake_utilities` submodule:
 ## Project Structure
 
 ```
-commander/                 Library headers
-  schema/                  Commander metaschema (JSON Schema)
+json_commander/            Library headers
+  schema/                  JSON-Commander metaschema (JSON Schema)
   model.hpp                C++ data model (Root, Command, Argument, ...)
   model_json.hpp           JSON serialization/deserialization
   schema_loader.hpp        Schema validation and loading
@@ -169,19 +169,19 @@ commander/                 Library headers
   parse.hpp                Argument parsing engine
   manpage.hpp              Man page and help text generation
   config_schema.hpp        Runtime config JSON Schema generation
-commander_testing/         Test sources (Catch2)
+json_commander_testing/    Test sources (Catch2)
 examples/
   greet/                   Simple flag + positional example
   serve/                   Schema-driven server example
   fake-git/                Nested subcommands example (modeled after git)
 tools/
-  commander.cpp            Unified CLI tool
-  commander.json           CLI tool's own schema (self-hosting)
+  json_commander.cpp       Unified CLI tool
+  json_commander.json      CLI tool's own schema (self-hosting)
 ```
 
 ## Architecture
 
-Commander follows a pipeline design:
+JSON-Commander follows a pipeline design:
 
 ```
 JSON Schema  -->  model::Root  -->  cmd::RootSpec  -->  parse::parse()  -->  JSON config
@@ -195,7 +195,7 @@ JSON Schema  -->  model::Root  -->  cmd::RootSpec  -->  parse::parse()  -->  JSO
    `FlagGroup`), `TypeSpec`, and documentation types.
 
 2. **Schema Loader** (`schema_loader.hpp`) -- validates a JSON document
-   against the commander metaschema and deserializes it into `model::Root`.
+   against the json-commander metaschema and deserializes it into `model::Root`.
 
 3. **Converters** (`conv.hpp`) -- bidirectional string-to-JSON converters
    for scalar types (string, int, float, bool, enum, file, dir, path) and

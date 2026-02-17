@@ -1,6 +1,6 @@
 #pragma once
 
-#include <commander/model.hpp>
+#include <json_commander/model.hpp>
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-namespace commander::conv {
+namespace json_commander::conv {
 
   class Error : public std::runtime_error {
   public:
@@ -306,4 +306,4 @@ namespace commander::conv {
         spec);
   }
 
-} // namespace commander::conv
+} // namespace json_commander::conv

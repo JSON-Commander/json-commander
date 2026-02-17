@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://commander.dev/schema/commander.schema.json",
-  "title": "Commander CLI Schema",
+  "$id": "https://json-commander.dev/schema/json_commander.schema.json",
+  "title": "JSON-Commander CLI Schema",
   "description": "Metaschema for defining command line interfaces via JSON. Validates user-authored JSON documents that describe command line interfaces, mapping OCaml cmdliner concepts to a declarative JSON representation.",
   "$ref": "#/$defs/root",
   "$defs": {
@@ -472,7 +472,7 @@
     },
     "config": {
       "title": "Configuration File Specification",
-      "description": "Declares configuration file sources. Commander merges values from configuration files with command line arguments and environment variables. Precedence (highest to lowest): CLI args > environment > local config > user config > system config > defaults.",
+      "description": "Declares configuration file sources. JSON-Commander merges values from configuration files with command line arguments and environment variables. Precedence (highest to lowest): CLI args > environment > local config > user config > system config > defaults.",
       "type": "object",
       "required": ["format"],
       "properties": {

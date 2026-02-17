@@ -5,7 +5,7 @@
 #include <variant>
 #include <vector>
 
-namespace commander::model {
+namespace json_commander::model {
 
   // ---------------------------------------------------------------------------
   // Leaf types
@@ -75,11 +75,11 @@ namespace commander::model {
   // Argument types
   // ---------------------------------------------------------------------------
 
-} // namespace commander::model
+} // namespace json_commander::model
 
 #include <nlohmann/json.hpp>
 
-namespace commander::model {
+namespace json_commander::model {
 
   struct Flag {
     ArgNames names;
@@ -246,4 +246,4 @@ namespace commander::model {
     operator==(const Root &) const = default;
   };
 
-} // namespace commander::model
+} // namespace json_commander::model

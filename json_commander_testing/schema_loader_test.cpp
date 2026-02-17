@@ -1,7 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
-#include <commander/schema_loader.hpp>
+#include <json_commander/schema_loader.hpp>
 
-using namespace commander::schema;
+using namespace json_commander::schema;
 
 // ---------------------------------------------------------------------------
 // Phase 1: Error type and Loader construction
@@ -62,7 +62,7 @@ TEST_CASE("load(json) with minimal schema returns Root", "[schema_loader]") {
   nlohmann::json j = {{"name", "app"}, {"doc", {"A description"}}};
   auto root = loader.load(j);
   REQUIRE(root.name == "app");
-  REQUIRE(root.doc == commander::model::DocString{"A description"});
+  REQUIRE(root.doc == json_commander::model::DocString{"A description"});
   REQUIRE_FALSE(root.version.has_value());
   REQUIRE_FALSE(root.config.has_value());
   REQUIRE_FALSE(root.args.has_value());
@@ -219,6 +219,6 @@ TEST_CASE("load(path) with valid file returns Root", "[schema_loader]") {
 TEST_CASE("load(path) rejects metaschema file as invalid CLI schema", "[schema_loader]") {
   Loader loader;
   std::string metaschema_path =
-      std::string(COMMANDER_SCHEMA_DIR) + "/commander.schema.json";
+      std::string(JSON_COMMANDER_SCHEMA_DIR) + "/json_commander.schema.json";
   REQUIRE_THROWS_AS(loader.load(metaschema_path), Error);
 }

@@ -1,12 +1,12 @@
 #include <catch2/catch_test_macros.hpp>
-#include <commander/model.hpp>
-#include <commander/model_json.hpp>
+#include <json_commander/model.hpp>
+#include <json_commander/model_json.hpp>
 #include <nlohmann/json.hpp>
 #include <string>
 #include <vector>
 
 using json = nlohmann::json;
-using namespace commander::model;
+using namespace json_commander::model;
 
 // ---------------------------------------------------------------------------
 // Helpers

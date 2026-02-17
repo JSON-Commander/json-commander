@@ -1,7 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
-#include <commander/conv.hpp>
+#include <json_commander/conv.hpp>
 
-using namespace commander::conv;
+using namespace json_commander::conv;
 using json = nlohmann::json;
 
 // ---------------------------------------------------------------------------
@@ -280,42 +280,42 @@ TEST_CASE("triple_conv docv shows all three types", "[conv]") {
 // ---------------------------------------------------------------------------
 
 TEST_CASE("make(ScalarType::String) has docv STRING", "[conv]") {
-  REQUIRE(make(commander::model::ScalarType::String).docv == "STRING");
+  REQUIRE(make(json_commander::model::ScalarType::String).docv == "STRING");
 }
 
 TEST_CASE("make(ScalarType::Int) parses integer", "[conv]") {
-  REQUIRE(make(commander::model::ScalarType::Int).parse("42") == json(42));
+  REQUIRE(make(json_commander::model::ScalarType::Int).parse("42") == json(42));
 }
 
 TEST_CASE("make(ScalarType::Enum) without choices parses any string", "[conv]") {
-  auto c = make(commander::model::ScalarType::Enum);
+  auto c = make(json_commander::model::ScalarType::Enum);
   REQUIRE_NOTHROW(c.parse("anything"));
   REQUIRE(c.parse("anything") == json("anything"));
 }
 
 TEST_CASE("make(TypeSpec) with ListType parses list", "[conv]") {
-  using namespace commander::model;
+  using namespace json_commander::model;
   TypeSpec spec = ListType{ScalarType::String, ","};
   auto c = make(spec);
   REQUIRE(c.parse("a,b") == json({"a", "b"}));
 }
 
 TEST_CASE("make(TypeSpec) with PairType parses pair", "[conv]") {
-  using namespace commander::model;
+  using namespace json_commander::model;
   TypeSpec spec = PairType{ScalarType::String, ScalarType::Int, "="};
   auto c = make(spec);
   REQUIRE(c.parse("k=1") == json({"k", 1}));
 }
 
 TEST_CASE("make(TypeSpec) with TripleType parses triple", "[conv]") {
-  using namespace commander::model;
+  using namespace json_commander::model;
   TypeSpec spec = TripleType{ScalarType::Int, ScalarType::Int, ScalarType::Int, ","};
   auto c = make(spec);
   REQUIRE(c.parse("1,2,3") == json({1, 2, 3}));
 }
 
 TEST_CASE("make(TypeSpec) with enum and choices validates against choices", "[conv]") {
-  using namespace commander::model;
+  using namespace json_commander::model;
   TypeSpec spec = ScalarType::Enum;
   auto c = make(spec, std::vector<std::string>{"json", "yaml"});
   REQUIRE(c.parse("json") == json("json"));
@@ -323,7 +323,7 @@ TEST_CASE("make(TypeSpec) with enum and choices validates against choices", "[co
 }
 
 TEST_CASE("make(TypeSpec) with list uses default separator when omitted", "[conv]") {
-  using namespace commander::model;
+  using namespace json_commander::model;
   TypeSpec spec = ListType{ScalarType::Int, std::nullopt};
   auto c = make(spec);
   REQUIRE(c.parse("1,2,3") == json({1, 2, 3}));

@@ -1,16 +1,16 @@
 {
-  "name": "commander",
-  "doc": ["A tool for working with commander CLI schemas."],
+  "name": "json-commander",
+  "doc": ["A tool for working with json-commander CLI schemas."],
   "version": "0.1.0",
   "commands": [
     {
       "name": "validate",
-      "doc": ["Validate a schema against the commander metaschema."],
+      "doc": ["Validate a schema against the json-commander metaschema."],
       "args": [
         {
           "kind": "positional",
           "name": "schema-file",
-          "doc": ["Path to the commander schema file."],
+          "doc": ["Path to the json-commander schema file."],
           "type": "string",
           "required": true
         }
@@ -23,7 +23,7 @@
         {
           "kind": "positional",
           "name": "schema-file",
-          "doc": ["Path to the commander schema file."],
+          "doc": ["Path to the json-commander schema file."],
           "type": "string",
           "required": true
         },
@@ -43,7 +43,7 @@
         {
           "kind": "positional",
           "name": "schema-file",
-          "doc": ["Path to the commander schema file."],
+          "doc": ["Path to the json-commander schema file."],
           "type": "string",
           "required": true
         },
@@ -63,7 +63,7 @@
         {
           "kind": "positional",
           "name": "schema-file",
-          "doc": ["Path to the commander schema file."],
+          "doc": ["Path to the json-commander schema file."],
           "type": "string",
           "required": true
         },
@@ -83,7 +83,7 @@
         {
           "kind": "positional",
           "name": "schema-file",
-          "doc": ["Path to the commander schema file."],
+          "doc": ["Path to the json-commander schema file."],
           "type": "string",
           "required": true
         },

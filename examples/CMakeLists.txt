@@ -1,13 +1,13 @@
-macro(commander_add_example example_name)
+macro(json_commander_add_example example_name)
   add_executable(${example_name} ${example_name}.cpp)
   target_link_libraries(${example_name} PRIVATE
-    commander::header
-    commander::library
+    json_commander::header
+    json_commander::library
     nlohmann_json::nlohmann_json
     nlohmann_json_schema_validator)
   set_target_properties(${example_name}
     PROPERTIES
-    CXX_STANDARD ${commander_CXX_STANDARD})
+    CXX_STANDARD ${json_commander_CXX_STANDARD})
 endmacro()
 
 add_subdirectory(fake-git)

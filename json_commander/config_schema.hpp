@@ -1,7 +1,7 @@
 #pragma once
 
-#include <commander/arg.hpp>
-#include <commander/model.hpp>
+#include <json_commander/arg.hpp>
+#include <json_commander/model.hpp>
 #include <nlohmann/json.hpp>
 
 #include <stdexcept>
@@ -9,7 +9,7 @@
 #include <utility>
 #include <vector>
 
-namespace commander::config_schema {
+namespace json_commander::config_schema {
 
   namespace detail {
 
@@ -193,4 +193,4 @@ namespace commander::config_schema {
     return detail::generate(all_args, display_name);
   }
 
-} // namespace commander::config_schema
+} // namespace json_commander::config_schema

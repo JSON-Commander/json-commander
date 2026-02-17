@@ -1,11 +1,11 @@
 #include <catch2/catch_test_macros.hpp>
-#include <commander/validate.hpp>
+#include <json_commander/validate.hpp>
 
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
 
-using namespace commander::validate;
+using namespace json_commander::validate;
 using json = nlohmann::json;
 
 // ---------------------------------------------------------------------------
@@ -239,7 +239,7 @@ TEST_CASE("all_of joins descriptions with ' + '", "[validate]") {
 // Phase 5: Factory functions (from_option, from_positional)
 // ---------------------------------------------------------------------------
 
-using namespace commander::model;
+using namespace json_commander::model;
 
 // --- helpers for building model types without triggering -Wmissing-field ---
 

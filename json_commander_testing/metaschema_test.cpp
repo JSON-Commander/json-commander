@@ -10,7 +10,7 @@ using nlohmann::json_schema::json_validator;
 namespace {
 
 const std::string schema_path =
-    std::string(COMMANDER_SCHEMA_DIR) + "/commander.schema.json";
+    std::string(JSON_COMMANDER_SCHEMA_DIR) + "/json_commander.schema.json";
 
 json load_json(const std::string &path) {
   std::ifstream f(path);

@@ -1,13 +1,13 @@
 #pragma once
 
-#include <commander/model_json.hpp>
+#include <json_commander/model_json.hpp>
 #include <fstream>
 #include <nlohmann/json-schema.hpp>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
 #include <string>
 
-namespace commander::schema {
+namespace json_commander::schema {
 
   class Error : public std::runtime_error {
   public:
@@ -17,7 +17,7 @@ namespace commander::schema {
   class Loader {
   public:
     Loader() {
-      std::string path = std::string(COMMANDER_SCHEMA_DIR) + "/commander.schema.json";
+      std::string path = std::string(JSON_COMMANDER_SCHEMA_DIR) + "/json_commander.schema.json";
       std::ifstream f(path);
       if (!f.is_open()) {
         throw Error("failed to open metaschema: " + path);
@@ -55,4 +55,4 @@ namespace commander::schema {
     nlohmann::json_schema::json_validator validator_;
   };
 
-} // namespace commander::schema
+} // namespace json_commander::schema

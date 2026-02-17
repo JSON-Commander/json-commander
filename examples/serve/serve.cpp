@@ -1,4 +1,4 @@
-// serve — A schema-driven CLI example using Commander.
+// serve — A schema-driven CLI example using JSON-Commander.
 //
 // Demonstrates:
 //   - Loading a CLI definition from a JSON schema file via schema::Loader
@@ -6,16 +6,16 @@
 //   - Environment variable bindings (SERVE_PORT, SERVE_HOST, SERVE_VERBOSE)
 //   - Catching schema::Error alongside parse::Error
 
-#include <commander/cmd.hpp>
-#include <commander/manpage.hpp>
-#include <commander/parse.hpp>
-#include <commander/schema_loader.hpp>
+#include <json_commander/cmd.hpp>
+#include <json_commander/manpage.hpp>
+#include <json_commander/parse.hpp>
+#include <json_commander/schema_loader.hpp>
 
 #include <iostream>
 #include <string>
 #include <vector>
 
-using namespace commander;
+using namespace json_commander;
 
 // ---------------------------------------------------------------------------
 // CLI definition

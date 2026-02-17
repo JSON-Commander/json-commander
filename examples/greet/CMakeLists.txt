@@ -1,1 +1,1 @@
-commander_add_example(greet)
+json_commander_add_example(greet)

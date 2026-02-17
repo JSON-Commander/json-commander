@@ -1,7 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
-#include <commander/cmd.hpp>
+#include <json_commander/cmd.hpp>
 
-using namespace commander;
+using namespace json_commander;
 using json = nlohmann::json;
 
 // ---------------------------------------------------------------------------

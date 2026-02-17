@@ -3,8 +3,8 @@ set -eu
 
 readonly scriptpath=$0;
 readonly scriptdir=$(dirname $0)
-readonly srcdir=$scriptdir/../commander
-readonly testdir=$scriptdir/../commander
+readonly srcdir=$scriptdir/../json_commander
+readonly testdir=$scriptdir/../json_commander
 
 function main(){
     format_files $srcdir

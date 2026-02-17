@@ -1,4 +1,4 @@
-// commander — A unified CLI tool for working with commander schemas.
+// json-commander — A unified CLI tool for working with json-commander schemas.
 //
 // Subcommands:
 //   validate       Validate a schema against the metaschema
@@ -7,17 +7,17 @@
 //   help           Generate plain-text help for a schema
 //   man            Generate a groff man page for a schema
 
-#include <commander/cmd.hpp>
-#include <commander/config_schema.hpp>
-#include <commander/manpage.hpp>
-#include <commander/parse.hpp>
-#include <commander/schema_loader.hpp>
+#include <json_commander/cmd.hpp>
+#include <json_commander/config_schema.hpp>
+#include <json_commander/manpage.hpp>
+#include <json_commander/parse.hpp>
+#include <json_commander/schema_loader.hpp>
 
 #include <iostream>
 #include <string>
 #include <vector>
 
-using namespace commander;
+using namespace json_commander;
 
 // ---------------------------------------------------------------------------
 // CLI definition
@@ -26,7 +26,7 @@ using namespace commander;
 model::Root
 make_cli() {
   schema::Loader loader;
-  return loader.load(std::string(COMMANDER_TOOL_SCHEMA));
+  return loader.load(std::string(JSON_COMMANDER_TOOL_SCHEMA));
 }
 
 // ---------------------------------------------------------------------------
@@ -179,7 +179,7 @@ run(const std::vector<std::string> &args) {
   }
 
   if (std::holds_alternative<parse::VersionRequest>(result)) {
-    std::cout << "commander version " << *cli.version << "\n";
+    std::cout << "json-commander version " << *cli.version << "\n";
     return 0;
   }
 

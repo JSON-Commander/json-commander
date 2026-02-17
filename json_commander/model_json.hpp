@@ -1,11 +1,11 @@
 #pragma once
 
-#include <commander/model.hpp>
+#include <json_commander/model.hpp>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
 #include <string>
 
-namespace commander::model {
+namespace json_commander::model {
 
   // ---------------------------------------------------------------------------
   // Helpers
@@ -667,4 +667,4 @@ namespace commander::model {
     detail::get_optional(j, "config", r.config);
   }
 
-} // namespace commander::model
+} // namespace json_commander::model

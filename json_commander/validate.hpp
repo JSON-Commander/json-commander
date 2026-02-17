@@ -1,6 +1,6 @@
 #pragma once
 
-#include <commander/model.hpp>
+#include <json_commander/model.hpp>
 #include <nlohmann/json.hpp>
 
 #include <filesystem>
@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-namespace commander::validate {
+namespace json_commander::validate {
 
   class Error : public std::runtime_error {
   public:
@@ -273,4 +273,4 @@ namespace commander::validate {
     return all_of(std::move(parts));
   }
 
-} // namespace commander::validate
+} // namespace json_commander::validate

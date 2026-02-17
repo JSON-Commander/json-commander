@@ -1,7 +1,7 @@
 #pragma once
 
-#include <commander/conv.hpp>
-#include <commander/model.hpp>
+#include <json_commander/conv.hpp>
+#include <json_commander/model.hpp>
 
 #include <algorithm>
 #include <map>
@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-namespace commander::manpage {
+namespace json_commander::manpage {
 
   // -------------------------------------------------------------------------
   // Standard section names
@@ -682,4 +682,4 @@ namespace commander::manpage {
     return to_plain_text(cmd, full_name, syn_name);
   }
 
-} // namespace commander::manpage
+} // namespace json_commander::manpage

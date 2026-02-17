@@ -1,4 +1,4 @@
-// greet — A simple CLI example using Commander.
+// greet — A simple CLI example using JSON-Commander.
 //
 // Demonstrates:
 //   - Building a model::Root with a flag and a positional
@@ -6,9 +6,9 @@
 //   - Parsing argc/argv via parse::parse
 //   - Handling all three ParseResult variants
 
-#include <commander/cmd.hpp>
-#include <commander/manpage.hpp>
-#include <commander/parse.hpp>
+#include <json_commander/cmd.hpp>
+#include <json_commander/manpage.hpp>
+#include <json_commander/parse.hpp>
 
 #include <algorithm>
 #include <cctype>
@@ -16,7 +16,7 @@
 #include <string>
 #include <vector>
 
-using namespace commander;
+using namespace json_commander;
 
 // ---------------------------------------------------------------------------
 // CLI definition

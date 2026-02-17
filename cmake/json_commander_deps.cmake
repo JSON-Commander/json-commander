@@ -14,6 +14,6 @@ install(TARGETS nlohmann_json
 install(EXPORT HACK_TO_SATISFY_CMAKE_FOR_VALIDATOR
   NAMESPACE barf::
   FILE hack-for-validator.cmake
-  DESTINATION ${commander_INSTALL_CONFDIR})
+  DESTINATION ${json_commander_INSTALL_CONFDIR})
 
 find_package(nlohmann_json_schema_validator REQUIRED)
