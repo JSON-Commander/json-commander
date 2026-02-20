@@ -491,9 +491,7 @@ namespace json_commander::manpage {
 
   template <typename T>
   std::vector<model::ManSection>
-  assemble(const T &root,
-           const std::string &display_name,
-           const std::string &synopsis_name = "") {
+  assemble(const T &root, const std::string &display_name, const std::string &synopsis_name = "") {
     std::map<std::string, model::ManSection> section_map;
     std::vector<std::string> section_names;
 
