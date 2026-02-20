@@ -1,10 +1,11 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(json-commander VERSION 0.1.0 LANGUAGES C CXX)
+project(json-commander VERSION 0.2.0 LANGUAGES C CXX)
 
 option(json_commander_BUILD_TESTING "Build the json-commander tests" ON)
 option(json_commander_BUILD_EXAMPLES "Build the json-commander examples" ON)
 option(json_commander_BUILD_TOOLS "Build the json-commander tools" ON)
+option(json_commander_BUILD_C_API "Build the json-commander C API shared library" ON)
 set(json_commander_CXX_STANDARD 20 CACHE STRING "C++ standard for json-commander")
 
 include(GNUInstallDirs)
@@ -12,6 +13,10 @@ set(json_commander_INSTALL_BINDIR ${CMAKE_INSTALL_BINDIR})
 set(json_commander_INSTALL_LIBDIR ${CMAKE_INSTALL_LIBDIR})
 set(json_commander_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR})
 set(json_commander_INSTALL_CONFDIR ${json_commander_INSTALL_LIBDIR}/cmake/json-commander-${PROJECT_VERSION})
+
+if(json_commander_BUILD_C_API)
+  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+endif()
 
 list(INSERT CMAKE_MODULE_PATH 0 ${PROJECT_SOURCE_DIR}/cmake)
 include(json_commander_deps)
@@ -22,6 +27,13 @@ if(json_commander_BUILD_TESTING)
   include(CTest)
   if(BUILD_TESTING)
     add_subdirectory(json_commander_testing)
+  endif()
+endif()
+
+if(json_commander_BUILD_C_API)
+  add_subdirectory(json_commander_c)
+  if(json_commander_BUILD_TESTING AND BUILD_TESTING)
+    add_subdirectory(json_commander_c_testing)
   endif()
 endif()
 
