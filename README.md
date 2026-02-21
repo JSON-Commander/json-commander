@@ -1,5 +1,7 @@
 # JSON-Commander
 
+[![CI](https://github.com/JSON-Commander/json-commander/actions/workflows/ci.yml/badge.svg)](https://github.com/JSON-Commander/json-commander/actions/workflows/ci.yml)
+
 A C++20 library for defining command line interfaces via JSON schemas.
 
 Inspired by OCaml's [cmdliner](https://erratique.ch/software/cmdliner),
@@ -24,18 +26,24 @@ output.
   metaschema before use
 - **Unified JSON output** -- parsing produces a flat JSON object ready for
   application consumption
+- **Simplified entry point** -- `json_commander::run()` handles parsing,
+  help, version, and man page dispatch in a single call
+- **C API** -- shared library with a single `jcmd_run()` function for
+  embedding in C programs or FFI bindings
 
 ## Quick Start
 
-Define your CLI as a `model::Root`, compile it, parse arguments, and use the
-resulting JSON configuration:
+Define your CLI as a `model::Root` and call `json_commander::run()` -- it
+handles argument parsing, `--help`, `--version`, and `--man` dispatch
+automatically:
 
 ```cpp
-#include <json_commander/cmd.hpp>
-#include <json_commander/manpage.hpp>
-#include <json_commander/parse.hpp>
+#include <json_commander/run.hpp>
 
+#include <algorithm>
+#include <cctype>
 #include <iostream>
+#include <string>
 
 using namespace json_commander;
 
@@ -59,23 +67,16 @@ model::Root make_cli() {
 }
 
 int main(int argc, char *argv[]) {
-  auto cli = make_cli();
-  auto spec = cmd::make(cli);
-  auto result = parse::parse(spec, {argv + 1, argv + argc});
-
-  if (auto *ok = std::get_if<parse::ParseOk>(&result)) {
-    std::cout << "Hello, " << ok->config["name"].get<std::string>() << "!\n";
+  return json_commander::run(make_cli(), argc, argv, [](const nlohmann::json &config) {
+    std::string greeting = "Hello, " + config["name"].get<std::string>() + "!";
+    if (config["loud"].get<bool>()) {
+      std::transform(greeting.begin(), greeting.end(), greeting.begin(), [](unsigned char c) {
+        return static_cast<char>(std::toupper(c));
+      });
+    }
+    std::cout << greeting << "\n";
     return 0;
-  }
-  if (auto *help = std::get_if<parse::HelpRequest>(&result)) {
-    std::cout << manpage::to_plain_text(cli, help->command_path);
-    return 0;
-  }
-  if (std::holds_alternative<parse::VersionRequest>(result)) {
-    std::cout << "greet " << *cli.version << "\n";
-    return 0;
-  }
-  return 1;
+  });
 }
 ```
 
@@ -101,6 +102,27 @@ CLIs can also be defined as JSON files and loaded at runtime via
       "required": true
     }
   ]
+}
+```
+
+### C API
+
+JSON-Commander also provides a C shared library with a single-function
+interface, suitable for embedding in C programs or creating FFI bindings:
+
+```c
+#include <json_commander.h>
+#include <stdio.h>
+
+static int greet_main(const char *config_json) {
+  /* config_json is a JSON string with parsed arguments */
+  printf("Got config: %s\n", config_json);
+  return 0;
+}
+
+int main(int argc, char *argv[]) {
+  const char *schema = "{\"name\":\"greet\", ...}";
+  return jcmd_run(schema, argc, argv, greet_main);
 }
 ```
 
@@ -133,7 +155,8 @@ from `compilers.json`). The base hidden preset lives in `CMakePresets.json`.
 
 ### Compiler Requirements
 
-C++20. Tested with Clang 11--20 and GCC 10--12.
+C++20. CI-tested with GCC 12--14, Clang 16--18, and Apple Clang (Xcode 15,
+ARM).
 
 ### Build Configurations
 
@@ -157,7 +180,7 @@ Managed via FetchContent through the `cmake_utilities` submodule:
 ## Project Structure
 
 ```
-json_commander/            Library headers
+json_commander/            Library headers (C++)
   schema/                  JSON-Commander metaschema (JSON Schema)
   model.hpp                C++ data model (Root, Command, Argument, ...)
   model_json.hpp           JSON serialization/deserialization
@@ -167,16 +190,23 @@ json_commander/            Library headers
   arg.hpp                  Compiled argument specifications
   cmd.hpp                  Command/subcommand compilation
   parse.hpp                Argument parsing engine
+  run.hpp                  Simplified run() entry point
   manpage.hpp              Man page and help text generation
   config_schema.hpp        Runtime config JSON Schema generation
+json_commander_c/          C API shared library
+  json_commander.h         Public C header (jcmd_run)
+  json_commander.cpp       C API implementation
 json_commander_testing/    Test sources (Catch2)
 examples/
-  greet/                   Simple flag + positional example
-  serve/                   Schema-driven server example
+  greet/                   Simple flag + positional example (C++)
+  serve/                   Schema-driven server example (C++)
+  greet-c/                 Inline schema example (C API)
+  serve-c/                 File-loaded schema example (C API)
   fake-git/                Nested subcommands example (modeled after git)
 tools/
   json_commander.cpp       Unified CLI tool
   json_commander.json      CLI tool's own schema (self-hosting)
+.github/workflows/         CI configuration
 ```
 
 ## Architecture
@@ -217,6 +247,13 @@ JSON Schema  -->  model::Root  -->  cmd::RootSpec  -->  parse::parse()  -->  JSO
 
 8. **Config schema** (`config_schema.hpp`) -- generates a JSON Schema
    describing the runtime configuration that `parse::parse` produces.
+
+9. **Run** (`run.hpp`) -- simplified entry point that handles schema
+   loading, parsing, and result dispatch (`--help`, `--version`, `--man`)
+   in a single `run()` call.
+
+10. **C API** (`json_commander_c/`) -- shared library exposing `jcmd_run()`,
+    a single C function that wraps the full pipeline for use from C or FFI.
 
 ## License
 
