@@ -30,8 +30,8 @@ read_file(const char *path) {
 
   char *buf = malloc((size_t)len + 1);
   if (buf) {
-    fread(buf, 1, (size_t)len, f);
-    buf[len] = '\0';
+    size_t n = fread(buf, 1, (size_t)len, f);
+    buf[n] = '\0';
   }
 
   fclose(f);
