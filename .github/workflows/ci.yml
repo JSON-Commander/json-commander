@@ -26,8 +26,8 @@ jobs:
           ./scripts/check-format.sh
           git diff --exit-code
 
-  build:
-    name: ${{ matrix.compiler }} / ${{ matrix.config }}
+  build-linux:
+    name: Linux ${{ matrix.compiler }} / ${{ matrix.config }}
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
@@ -64,6 +64,44 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ninja-build ${{ matrix.pkg }}
+
+      - name: Configure
+        run: |
+          cmake -G "Ninja Multi-Config" -B build \
+            -DCMAKE_CXX_FLAGS="-Wall -Wextra -pedantic -Werror" \
+            -DCMAKE_CXX_FLAGS_RELEASE="-g -DNDEBUG -O3" \
+            -DCMAKE_CXX_FLAGS_RELWITHDEBINFO="-fsanitize=undefined -fsanitize=address -g -O3" \
+            -DCMAKE_C_FLAGS_RELWITHDEBINFO="-fsanitize=undefined -fsanitize=address -g -O3" \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -Dnlohmann_json_GIT_TAG=v3.10.0 \
+            -Dnlohmann_json_FORCE_DOWNLOAD=ON \
+            -Dnlohmann_json_schema_validator_FORCE_DOWNLOAD=ON \
+            -Dnlohmann_json_schema_validator_GIT_TAG=2.4.0 \
+            -DJSON_VALIDATOR_BUILD_TESTS=OFF \
+            -DJSON_VALIDATOR_BUILD_EXAMPLES=OFF
+
+      - name: Build
+        run: cmake --build build --config ${{ matrix.config }}
+
+      - name: Test
+        run: ctest --test-dir build -C ${{ matrix.config }} --output-on-failure
+
+  build-macos:
+    name: macOS apple-clang / ${{ matrix.config }}
+    runs-on: macos-14
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - Release
+          - RelWithDebInfo
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Ninja
+        run: brew install ninja
 
       - name: Configure
         run: |
