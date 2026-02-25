@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(json-commander VERSION 0.2.0 LANGUAGES C CXX)
+project(json-commander VERSION 0.3.0 LANGUAGES C CXX)
 
 option(json_commander_BUILD_TESTING "Build the json-commander tests" ON)
 option(json_commander_BUILD_EXAMPLES "Build the json-commander examples" ON)
@@ -20,6 +20,9 @@ endif()
 
 list(INSERT CMAKE_MODULE_PATH 0 ${PROJECT_SOURCE_DIR}/cmake)
 include(json_commander_deps)
+
+set(json_commander_TEMPLATE_DIR "${PROJECT_SOURCE_DIR}/cmake")
+include(json_commander_add_executable)
 
 add_subdirectory(json_commander)
 
@@ -52,4 +55,9 @@ install(EXPORT json_commander_EXPORTS
 
 configure_file(json-commander-config.cmake.in json-commander-config.cmake)
 install(FILES ${PROJECT_BINARY_DIR}/json-commander-config.cmake
+  DESTINATION ${json_commander_INSTALL_CONFDIR})
+
+install(FILES
+  cmake/json_commander_add_executable.cmake
+  cmake/json_commander_main.cpp.in
   DESTINATION ${json_commander_INSTALL_CONFDIR})
