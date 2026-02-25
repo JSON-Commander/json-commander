@@ -14,7 +14,8 @@ add_library(json_commander_library INTERFACE)
 set_target_properties(json_commander_library PROPERTIES EXPORT_NAME library)
 target_compile_definitions(json_commander_library
   INTERFACE
-  JSON_COMMANDER_SCHEMA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/schema")
+  $<BUILD_INTERFACE:JSON_COMMANDER_SCHEMA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/schema">
+  $<INSTALL_INTERFACE:JSON_COMMANDER_SCHEMA_DIR="${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/json_commander/schema">)
 add_library(json_commander::library ALIAS json_commander_library)
 
 install(TARGETS json_commander_header json_commander_library
@@ -25,6 +26,17 @@ install(TARGETS json_commander_header json_commander_library
 
 install(FILES
   ${CMAKE_CURRENT_BINARY_DIR}/config.hpp
+  arg.hpp
+  cmd.hpp
+  config_schema.hpp
+  conv.hpp
+  manpage.hpp
+  model.hpp
+  model_json.hpp
+  parse.hpp
+  run.hpp
+  schema_loader.hpp
+  validate.hpp
   DESTINATION ${json_commander_INSTALL_INCLUDEDIR}/json_commander)
 
 install(DIRECTORY schema/
