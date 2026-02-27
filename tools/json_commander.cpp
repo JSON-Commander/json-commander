@@ -12,6 +12,7 @@
 #include <json_commander/config_schema.hpp>
 #include <json_commander/manpage.hpp>
 #include <json_commander/parse.hpp>
+#include <json_commander/run.hpp>
 #include <json_commander/schema_loader.hpp>
 
 #include "json_commander_schema.hpp"
@@ -161,14 +162,24 @@ run(const std::vector<std::string>& args) {
 
   if (auto* ok = std::get_if<parse::ParseOk>(&result)) {
     if (ok->command_path.empty()) {
-      std::cerr << manpage::to_plain_text(cli, {});
+      if (JCMD_ISATTY(JCMD_STDERR_FD)) {
+        int width = terminal_width(JCMD_STDERR_FD);
+        std::cerr << manpage::to_ansi_text(cli, {}, width);
+      } else {
+        std::cerr << manpage::to_plain_text(cli, {});
+      }
       return 1;
     }
     return dispatch(*ok);
   }
 
   if (auto* help = std::get_if<parse::HelpRequest>(&result)) {
-    std::cout << manpage::to_plain_text(cli, help->command_path);
+    if (JCMD_ISATTY(JCMD_STDOUT_FD)) {
+      int width = terminal_width(JCMD_STDOUT_FD);
+      std::cout << manpage::to_ansi_text(cli, help->command_path, width);
+    } else {
+      std::cout << manpage::to_plain_text(cli, help->command_path);
+    }
     return 0;
   }
 
