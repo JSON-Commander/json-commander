@@ -14,10 +14,12 @@
 
 #ifdef _WIN32
 #include <io.h>
+#include <windows.h>
 #define JCMD_ISATTY(fd) _isatty(fd)
 #define JCMD_STDOUT_FD _fileno(stdout)
 #define JCMD_STDERR_FD _fileno(stderr)
 #else
+#include <sys/ioctl.h>
 #include <unistd.h>
 #define JCMD_ISATTY(fd) isatty(fd)
 #define JCMD_STDOUT_FD STDOUT_FILENO
@@ -25,6 +27,23 @@
 #endif
 
 namespace json_commander {
+
+  inline int
+  terminal_width(int fd) {
+#ifdef _WIN32
+    HANDLE h =
+      GetStdHandle(fd == JCMD_STDOUT_FD ? STD_OUTPUT_HANDLE : STD_ERROR_HANDLE);
+    CONSOLE_SCREEN_BUFFER_INFO info;
+    if (GetConsoleScreenBufferInfo(h, &info)) {
+      return info.srWindow.Right - info.srWindow.Left + 1;
+    }
+    return 80;
+#else
+    struct winsize ws{};
+    if (ioctl(fd, TIOCGWINSZ, &ws) == 0 && ws.ws_col > 0) { return ws.ws_col; }
+    return 80;
+#endif
+  }
 
   using MainFn = std::function<int(const nlohmann::json& config)>;
 
@@ -50,7 +69,8 @@ namespace json_commander {
     } catch (const parse::Error& e) {
       std::cerr << name << ": " << e.what() << "\n";
       if (JCMD_ISATTY(JCMD_STDERR_FD)) {
-        std::cerr << manpage::to_ansi_text(root, {});
+        int width = terminal_width(JCMD_STDERR_FD);
+        std::cerr << manpage::to_ansi_text(root, {}, width);
       } else {
         std::cerr << manpage::to_plain_text(root, {});
       }
@@ -65,7 +85,8 @@ namespace json_commander {
           return main_fn(r.config);
         } else if constexpr (std::is_same_v<T, parse::HelpRequest>) {
           if (JCMD_ISATTY(JCMD_STDOUT_FD)) {
-            std::cout << manpage::to_ansi_text(root, r.command_path);
+            int width = terminal_width(JCMD_STDOUT_FD);
+            std::cout << manpage::to_ansi_text(root, r.command_path, width);
           } else {
             std::cout << manpage::to_plain_text(root, r.command_path);
           }

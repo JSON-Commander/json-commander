@@ -164,6 +164,86 @@ namespace json_commander::manpage {
       }
     };
 
+    inline int
+    display_width(const std::string& text) {
+      int width = 0;
+      for (std::size_t i = 0; i < text.size(); ++i) {
+        if (text[i] == '\033' && i + 1 < text.size() && text[i + 1] == '[') {
+          // Skip ANSI escape: \033[ ... m
+          i += 2;
+          while (i < text.size() && text[i] != 'm') {
+            ++i;
+          }
+        } else {
+          ++width;
+        }
+      }
+      return width;
+    }
+
+    inline std::string
+    wrap_text(const std::string& text, int indent, int width) {
+      if (width == 0) { return text; }
+      int available = width - indent;
+      if (available < 10) { return text; }
+
+      std::string indent_str(static_cast<std::size_t>(indent), ' ');
+      std::string result;
+
+      // Split on paragraph breaks first
+      std::vector<std::string> paragraphs;
+      std::size_t pos = 0;
+      while (pos < text.size()) {
+        auto brk = text.find("\n\n", pos);
+        if (brk == std::string::npos) {
+          paragraphs.push_back(text.substr(pos));
+          break;
+        }
+        paragraphs.push_back(text.substr(pos, brk - pos));
+        pos = brk + 2;
+      }
+
+      for (std::size_t pi = 0; pi < paragraphs.size(); ++pi) {
+        if (pi > 0) { result += "\n\n" + indent_str; }
+
+        const auto& para = paragraphs[pi];
+
+        // Split into words, preserving ANSI codes attached to words
+        std::vector<std::string> words;
+        std::string current_word;
+        for (std::size_t i = 0; i < para.size(); ++i) {
+          if (para[i] == ' ') {
+            if (!current_word.empty()) {
+              words.push_back(current_word);
+              current_word.clear();
+            }
+          } else {
+            current_word += para[i];
+          }
+        }
+        if (!current_word.empty()) { words.push_back(current_word); }
+
+        int line_width = 0;
+        bool first_word = true;
+        for (const auto& word : words) {
+          int word_width = display_width(word);
+          if (first_word) {
+            result += word;
+            line_width = word_width;
+            first_word = false;
+          } else if (line_width + 1 + word_width <= available) {
+            result += " " + word;
+            line_width += 1 + word_width;
+          } else {
+            result += "\n" + indent_str + word;
+            line_width = word_width;
+          }
+        }
+      }
+
+      return result;
+    }
+
     template <typename FontPolicy>
     inline std::string
     unescape_with(const std::string& text) {
@@ -202,14 +282,14 @@ namespace json_commander::manpage {
 
     template <typename FontPolicy>
     inline std::string
-    render_block_with(const model::ManBlock& block) {
+    render_block_with(const model::ManBlock& block, int width = 0) {
       return std::visit(
-        [](const auto& b) -> std::string {
+        [width](const auto& b) -> std::string {
           using T = std::decay_t<decltype(b)>;
           if constexpr (std::is_same_v<T, model::ParagraphBlock>) {
-            return "       " +
-                   unescape_with<FontPolicy>(docstring_to_text(b.paragraph)) +
-                   "\n";
+            auto text =
+              unescape_with<FontPolicy>(docstring_to_text(b.paragraph));
+            return "       " + wrap_text(text, 7, width) + "\n";
           } else if constexpr (std::is_same_v<T, model::PreBlock>) {
             std::string result;
             for (const auto& line : b.pre) {
@@ -219,9 +299,8 @@ namespace json_commander::manpage {
           } else if constexpr (std::is_same_v<T, model::LabelTextBlock>) {
             std::string result;
             result += "       " + unescape_with<FontPolicy>(b.label) + "\n";
-            result += "           " +
-                      unescape_with<FontPolicy>(docstring_to_text(b.text)) +
-                      "\n";
+            auto text = unescape_with<FontPolicy>(docstring_to_text(b.text));
+            result += "           " + wrap_text(text, 11, width) + "\n";
             return result;
           } else if constexpr (std::is_same_v<T, model::NoBlankBlock>) {
             return "";
@@ -232,10 +311,10 @@ namespace json_commander::manpage {
 
     template <typename FontPolicy>
     inline std::string
-    render_section_with(const model::ManSection& section) {
+    render_section_with(const model::ManSection& section, int width = 0) {
       std::string result = FontPolicy::section_header(section.name);
       for (const auto& block : section.blocks) {
-        result += render_block_with<FontPolicy>(block);
+        result += render_block_with<FontPolicy>(block, width);
       }
       result += "\n";
       return result;
@@ -245,10 +324,11 @@ namespace json_commander::manpage {
     inline std::string
     render_page_with(
       const std::string& /*name*/,
-      const std::vector<model::ManSection>& sections) {
+      const std::vector<model::ManSection>& sections,
+      int width = 0) {
       std::string result;
       for (const auto& section : sections) {
-        result += render_section_with<FontPolicy>(section);
+        result += render_section_with<FontPolicy>(section, width);
       }
       return result;
     }
@@ -348,19 +428,21 @@ namespace json_commander::manpage {
     }
 
     inline std::string
-    render_block(const model::ManBlock& block) {
-      return detail::render_block_with<detail::StripFont>(block);
+    render_block(const model::ManBlock& block, int width = 0) {
+      return detail::render_block_with<detail::StripFont>(block, width);
     }
 
     inline std::string
-    render_section(const model::ManSection& section) {
-      return detail::render_section_with<detail::StripFont>(section);
+    render_section(const model::ManSection& section, int width = 0) {
+      return detail::render_section_with<detail::StripFont>(section, width);
     }
 
     inline std::string
     render_page(
-      const std::string& name, const std::vector<model::ManSection>& sections) {
-      return detail::render_page_with<detail::StripFont>(name, sections);
+      const std::string& name,
+      const std::vector<model::ManSection>& sections,
+      int width = 0) {
+      return detail::render_page_with<detail::StripFont>(name, sections, width);
     }
 
   } // namespace plain
@@ -377,19 +459,21 @@ namespace json_commander::manpage {
     }
 
     inline std::string
-    render_block(const model::ManBlock& block) {
-      return detail::render_block_with<detail::AnsiFont>(block);
+    render_block(const model::ManBlock& block, int width = 0) {
+      return detail::render_block_with<detail::AnsiFont>(block, width);
     }
 
     inline std::string
-    render_section(const model::ManSection& section) {
-      return detail::render_section_with<detail::AnsiFont>(section);
+    render_section(const model::ManSection& section, int width = 0) {
+      return detail::render_section_with<detail::AnsiFont>(section, width);
     }
 
     inline std::string
     render_page(
-      const std::string& name, const std::vector<model::ManSection>& sections) {
-      return detail::render_page_with<detail::AnsiFont>(name, sections);
+      const std::string& name,
+      const std::vector<model::ManSection>& sections,
+      int width = 0) {
+      return detail::render_page_with<detail::AnsiFont>(name, sections, width);
     }
 
   } // namespace ansi
@@ -756,24 +840,27 @@ namespace json_commander::manpage {
   // -------------------------------------------------------------------------
 
   inline std::string
-  to_plain_text(const model::Root& root) {
+  to_plain_text(const model::Root& root, int width = 0) {
     auto sections = assemble(root, root.name);
-    return plain::render_page(root.name, sections);
+    return plain::render_page(root.name, sections, width);
   }
 
   inline std::string
   to_plain_text(
     const model::Command& cmd,
     const std::string& full_name,
-    const std::string& synopsis_name = "") {
+    const std::string& synopsis_name = "",
+    int width = 0) {
     auto sections = assemble(cmd, full_name, synopsis_name);
-    return plain::render_page(full_name, sections);
+    return plain::render_page(full_name, sections, width);
   }
 
   inline std::string
   to_plain_text(
-    const model::Root& root, const std::vector<std::string>& command_path) {
-    if (command_path.empty()) { return to_plain_text(root); }
+    const model::Root& root,
+    const std::vector<std::string>& command_path,
+    int width = 0) {
+    if (command_path.empty()) { return to_plain_text(root, width); }
 
     const auto& cmd = find_command(root, command_path);
 
@@ -784,7 +871,7 @@ namespace json_commander::manpage {
       syn_name += " " + segment;
     }
 
-    return to_plain_text(cmd, full_name, syn_name);
+    return to_plain_text(cmd, full_name, syn_name, width);
   }
 
   // -------------------------------------------------------------------------
@@ -792,24 +879,27 @@ namespace json_commander::manpage {
   // -------------------------------------------------------------------------
 
   inline std::string
-  to_ansi_text(const model::Root& root) {
+  to_ansi_text(const model::Root& root, int width = 0) {
     auto sections = assemble(root, root.name);
-    return ansi::render_page(root.name, sections);
+    return ansi::render_page(root.name, sections, width);
   }
 
   inline std::string
   to_ansi_text(
     const model::Command& cmd,
     const std::string& full_name,
-    const std::string& synopsis_name = "") {
+    const std::string& synopsis_name = "",
+    int width = 0) {
     auto sections = assemble(cmd, full_name, synopsis_name);
-    return ansi::render_page(full_name, sections);
+    return ansi::render_page(full_name, sections, width);
   }
 
   inline std::string
   to_ansi_text(
-    const model::Root& root, const std::vector<std::string>& command_path) {
-    if (command_path.empty()) { return to_ansi_text(root); }
+    const model::Root& root,
+    const std::vector<std::string>& command_path,
+    int width = 0) {
+    if (command_path.empty()) { return to_ansi_text(root, width); }
 
     const auto& cmd = find_command(root, command_path);
 
@@ -820,7 +910,7 @@ namespace json_commander::manpage {
       syn_name += " " + segment;
     }
 
-    return to_ansi_text(cmd, full_name, syn_name);
+    return to_ansi_text(cmd, full_name, syn_name, width);
   }
 
 } // namespace json_commander::manpage

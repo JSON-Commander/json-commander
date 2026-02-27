@@ -2,6 +2,7 @@
 #include <catch2/matchers/catch_matchers_string.hpp>
 #include <json_commander/manpage.hpp>
 
+#include <sstream>
 #include <stdexcept>
 
 using namespace json_commander;
@@ -1113,6 +1114,206 @@ TEST_CASE(
   auto by_root = to_ansi_text(root);
   auto by_path = to_ansi_text(root, std::vector<std::string>{});
   REQUIRE(by_root == by_path);
+}
+
+// ---------------------------------------------------------------------------
+// Phase 13: Text wrapping utilities
+// ---------------------------------------------------------------------------
+
+TEST_CASE("display_width of plain text returns length", "[manpage][wrap]") {
+  REQUIRE(detail::display_width("hello") == 5);
+}
+
+TEST_CASE("display_width of empty string returns 0", "[manpage][wrap]") {
+  REQUIRE(detail::display_width("") == 0);
+}
+
+TEST_CASE("display_width skips ANSI escape sequences", "[manpage][wrap]") {
+  REQUIRE(detail::display_width("\033[1mhello\033[0m") == 5);
+}
+
+TEST_CASE("display_width with multiple ANSI codes", "[manpage][wrap]") {
+  REQUIRE(
+    detail::display_width("\033[1mbold\033[0m and \033[4munderline\033[0m") ==
+    18);
+}
+
+TEST_CASE("wrap_text with width 0 returns text unchanged", "[manpage][wrap]") {
+  std::string text = "hello world this is a test";
+  REQUIRE(detail::wrap_text(text, 7, 0) == text);
+}
+
+TEST_CASE("wrap_text short text that fits does not wrap", "[manpage][wrap]") {
+  std::string text = "short text";
+  REQUIRE(detail::wrap_text(text, 7, 80) == "short text");
+}
+
+TEST_CASE("wrap_text wraps long text at word boundary", "[manpage][wrap]") {
+  std::string text = "the quick brown fox jumps over the lazy dog";
+  // width=30, indent=7: available=23 chars per line
+  auto result = detail::wrap_text(text, 7, 30);
+  // Each line after the first should start with 7 spaces
+  REQUIRE(result.find("\n       ") != std::string::npos);
+  // No line (including indent) should exceed 30 visible chars
+  std::istringstream stream(result);
+  std::string line;
+  bool first = true;
+  while (std::getline(stream, line)) {
+    if (first) {
+      // First line: caller already prepended indent, so wrap_text returns
+      // content only. Width check: indent(7) + content <= 30
+      REQUIRE(static_cast<int>(line.size()) + 7 <= 30);
+      first = false;
+    } else {
+      REQUIRE(static_cast<int>(line.size()) <= 30);
+    }
+  }
+}
+
+TEST_CASE(
+  "wrap_text with ANSI codes wraps by visible width", "[manpage][wrap]") {
+  // "\033[1m" is 4 bytes but 0 display width
+  std::string text = "\033[1mbold\033[0m word1 word2 word3 word4 word5";
+  // width=25, indent=7: 18 visible chars available
+  auto result = detail::wrap_text(text, 7, 25);
+  // Should contain a line break
+  REQUIRE(result.find("\n") != std::string::npos);
+}
+
+TEST_CASE("wrap_text preserves paragraph breaks", "[manpage][wrap]") {
+  std::string text = "first paragraph\n\nsecond paragraph";
+  auto result = detail::wrap_text(text, 7, 80);
+  REQUIRE(result.find("\n\n") != std::string::npos);
+}
+
+TEST_CASE(
+  "wrap_text falls back to no-wrap for very narrow width", "[manpage][wrap]") {
+  std::string text = "hello world";
+  // indent=7, width=15 -> available=8 which is < 10
+  auto result = detail::wrap_text(text, 7, 15);
+  REQUIRE(result == text);
+}
+
+// ---------------------------------------------------------------------------
+// Phase 14: Width-aware block rendering
+// ---------------------------------------------------------------------------
+
+TEST_CASE(
+  "plain::render_block with width=0 produces same output as before",
+  "[manpage][wrap]") {
+  model::ParagraphBlock block{{"Hello world."}};
+  REQUIRE(plain::render_block(block, 0) == "       Hello world.\n");
+}
+
+TEST_CASE(
+  "plain::render_block wraps long paragraph at specified width",
+  "[manpage][wrap]") {
+  model::ParagraphBlock block{
+    {"The quick brown fox jumps over the lazy dog and keeps on running."}};
+  auto result = plain::render_block(block, 40);
+  // Should contain line breaks due to wrapping
+  // Count newlines - should be more than just the trailing one
+  int newlines = 0;
+  for (char c : result) {
+    if (c == '\n') newlines++;
+  }
+  REQUIRE(newlines > 1);
+  // Should start with 7-space indent
+  REQUIRE(result.substr(0, 7) == "       ");
+}
+
+TEST_CASE(
+  "plain::render_block wraps LabelTextBlock description at width",
+  "[manpage][wrap]") {
+  model::LabelTextBlock block{
+    "\\fB\\-\\-verbose\\fR",
+    {"Enable very verbose output for all operations including debug "
+     "information."}};
+  auto result = plain::render_block(block, 40);
+  // Label line
+  REQUIRE(result.find("       --verbose\n") == 0);
+  // Description should be wrapped (multiple lines after the label)
+  auto desc_start = result.find("           ");
+  REQUIRE(desc_start != std::string::npos);
+}
+
+TEST_CASE(
+  "ansi::render_block with width wraps ANSI text correctly",
+  "[manpage][wrap]") {
+  model::ParagraphBlock block{
+    {"Use \\fB\\-\\-verbose\\fR to enable verbose output for all operations "
+     "and see detailed information."}};
+  auto result = ansi::render_block(block, 50);
+  // Should wrap at some point
+  int newlines = 0;
+  for (char c : result) {
+    if (c == '\n') newlines++;
+  }
+  REQUIRE(newlines > 1);
+}
+
+TEST_CASE(
+  "plain::render_block PreBlock is not wrapped even with width",
+  "[manpage][wrap]") {
+  model::PreBlock block{{"this is a long preformatted line that should not be "
+                         "wrapped at any width"}};
+  auto with_width = plain::render_block(block, 30);
+  auto without_width = plain::render_block(block, 0);
+  REQUIRE(with_width == without_width);
+}
+
+TEST_CASE("to_plain_text with width wraps content", "[manpage][wrap]") {
+  model::Root root{};
+  root.name = "mytool";
+  root.doc = {"A test tool with a somewhat long description that should be "
+              "wrapped when a narrow width is specified."};
+
+  auto output = to_plain_text(root, 40);
+  // Should contain more newlines than the unwrapped version
+  auto unwrapped = to_plain_text(root);
+  int wrapped_newlines = 0;
+  int unwrapped_newlines = 0;
+  for (char c : output) {
+    if (c == '\n') wrapped_newlines++;
+  }
+  for (char c : unwrapped) {
+    if (c == '\n') unwrapped_newlines++;
+  }
+  REQUIRE(wrapped_newlines > unwrapped_newlines);
+}
+
+TEST_CASE("to_ansi_text with width wraps content", "[manpage][wrap]") {
+  model::Root root{};
+  root.name = "mytool";
+  root.doc = {"A test tool with a somewhat long description that should be "
+              "wrapped when a narrow width is specified."};
+
+  auto output = to_ansi_text(root, 40);
+  auto unwrapped = to_ansi_text(root);
+  int wrapped_newlines = 0;
+  int unwrapped_newlines = 0;
+  for (char c : output) {
+    if (c == '\n') wrapped_newlines++;
+  }
+  for (char c : unwrapped) {
+    if (c == '\n') unwrapped_newlines++;
+  }
+  REQUIRE(wrapped_newlines > unwrapped_newlines);
+}
+
+TEST_CASE("to_plain_text with command_path and width", "[manpage][wrap]") {
+  auto root = make_test_root();
+  auto output = to_plain_text(root, {"build"}, 40);
+  // Should produce valid output
+  REQUIRE(output.find("NAME\n") != std::string::npos);
+  REQUIRE(output.find("mytool-build") != std::string::npos);
+}
+
+TEST_CASE("to_ansi_text with command_path and width", "[manpage][wrap]") {
+  auto root = make_test_root();
+  auto output = to_ansi_text(root, {"build"}, 40);
+  REQUIRE(output.find("\033[1mNAME\033[0m\n") != std::string::npos);
+  REQUIRE(output.find("mytool-build") != std::string::npos);
 }
 
 TEST_CASE(
