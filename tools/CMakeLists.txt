@@ -97,13 +97,21 @@ add_custom_target(json-commander_completions ALL
   COMMENT "Generating shell completions for json-commander")
 
 install(CODE "
-  set(_gen_dir \"${_gen_dir}\")
-  set(_exe_name \"$<TARGET_FILE_BASE_NAME:json-commander>\")
-  file(INSTALL \"\${_gen_dir}/\${_exe_name}.bash\"
-    DESTINATION \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/bash-completion/completions\"
-    RENAME \"\${_exe_name}\")
-  file(INSTALL \"\${_gen_dir}/_\${_exe_name}\"
-    DESTINATION \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/zsh/site-functions\")
-  file(INSTALL \"\${_gen_dir}/\${_exe_name}.fish\"
-    DESTINATION \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/fish/vendor_completions.d\")
+  file(GLOB _bash_comps \"${_gen_dir}/*.bash\")
+  foreach(_f IN LISTS _bash_comps)
+    get_filename_component(_bn \"\${_f}\" NAME_WE)
+    file(INSTALL \"\${_f}\"
+      DESTINATION \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/bash-completion/completions\"
+      RENAME \"\${_bn}\")
+  endforeach()
+  file(GLOB _zsh_comps \"${_gen_dir}/_*\")
+  foreach(_f IN LISTS _zsh_comps)
+    file(INSTALL \"\${_f}\"
+      DESTINATION \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/zsh/site-functions\")
+  endforeach()
+  file(GLOB _fish_comps \"${_gen_dir}/*.fish\")
+  foreach(_f IN LISTS _fish_comps)
+    file(INSTALL \"\${_f}\"
+      DESTINATION \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/fish/vendor_completions.d\")
+  endforeach()
 ")
