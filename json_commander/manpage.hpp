@@ -792,6 +792,50 @@ namespace json_commander::manpage {
   }
 
   // -------------------------------------------------------------------------
+  // Auto-generated SEE ALSO cross-references
+  // -------------------------------------------------------------------------
+
+  inline std::vector<model::ManXref>
+  make_root_xrefs(const model::Root& root) {
+    std::vector<model::ManXref> xrefs;
+    if (root.commands.has_value()) {
+      int man_section = 1;
+      if (root.man.has_value() && root.man->section.has_value()) {
+        man_section = *root.man->section;
+      }
+      for (const auto& cmd : *root.commands) {
+        xrefs.push_back({root.name + "-" + cmd.name, man_section});
+      }
+    }
+    return xrefs;
+  }
+
+  inline std::vector<model::ManXref>
+  make_subcommand_xrefs(const model::Root& root) {
+    int man_section = 1;
+    if (root.man.has_value() && root.man->section.has_value()) {
+      man_section = *root.man->section;
+    }
+    return {{root.name, man_section}};
+  }
+
+  inline void
+  append_see_also(
+    std::vector<model::ManSection>& sections,
+    const std::vector<model::ManXref>& xrefs) {
+    if (xrefs.empty()) { return; }
+    auto see_also = make_see_also_section(xrefs);
+    for (auto& s : sections) {
+      if (s.name == s_see_also) {
+        s.blocks.insert(
+          s.blocks.end(), see_also.blocks.begin(), see_also.blocks.end());
+        return;
+      }
+    }
+    sections.push_back(see_also);
+  }
+
+  // -------------------------------------------------------------------------
   // Convenience: assemble + render
   // -------------------------------------------------------------------------
 
@@ -803,6 +847,7 @@ namespace json_commander::manpage {
     }
     std::string version = root.version.value_or("");
     auto sections = assemble(root, root.name);
+    append_see_also(sections, make_root_xrefs(root));
     return groff::render_page(root.name, man_section, version, sections);
   }
 
@@ -835,7 +880,13 @@ namespace json_commander::manpage {
       syn_name += " " + segment;
     }
 
-    return to_groff(cmd, full_name, version, syn_name);
+    int man_section = 1;
+    if (cmd.man.has_value() && cmd.man->section.has_value()) {
+      man_section = *cmd.man->section;
+    }
+    auto sections = assemble(cmd, full_name, syn_name);
+    append_see_also(sections, make_subcommand_xrefs(root));
+    return groff::render_page(full_name, man_section, version, sections);
   }
 
   // -------------------------------------------------------------------------
@@ -845,6 +896,7 @@ namespace json_commander::manpage {
   inline std::string
   to_plain_text(const model::Root& root, int width = 0) {
     auto sections = assemble(root, root.name);
+    append_see_also(sections, make_root_xrefs(root));
     return plain::render_page(root.name, sections, width);
   }
 
@@ -874,7 +926,9 @@ namespace json_commander::manpage {
       syn_name += " " + segment;
     }
 
-    return to_plain_text(cmd, full_name, syn_name, width);
+    auto sections = assemble(cmd, full_name, syn_name);
+    append_see_also(sections, make_subcommand_xrefs(root));
+    return plain::render_page(full_name, sections, width);
   }
 
   // -------------------------------------------------------------------------
@@ -884,6 +938,7 @@ namespace json_commander::manpage {
   inline std::string
   to_ansi_text(const model::Root& root, int width = 0) {
     auto sections = assemble(root, root.name);
+    append_see_also(sections, make_root_xrefs(root));
     return ansi::render_page(root.name, sections, width);
   }
 
@@ -913,7 +968,9 @@ namespace json_commander::manpage {
       syn_name += " " + segment;
     }
 
-    return to_ansi_text(cmd, full_name, syn_name, width);
+    auto sections = assemble(cmd, full_name, syn_name);
+    append_see_also(sections, make_subcommand_xrefs(root));
+    return ansi::render_page(full_name, sections, width);
   }
 
 } // namespace json_commander::manpage

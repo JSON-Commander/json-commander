@@ -1331,3 +1331,93 @@ TEST_CASE(
   REQUIRE(output.find("\\fB") == std::string::npos);
   REQUIRE(output.find("\\fR") == std::string::npos);
 }
+
+// ---------------------------------------------------------------------------
+// Phase 15: Auto-generated SEE ALSO cross-references
+// ---------------------------------------------------------------------------
+
+TEST_CASE(
+  "to_groff root with subcommands auto-generates SEE ALSO",
+  "[manpage][see_also]") {
+  auto root = make_test_root();
+  auto output = to_groff(root);
+  REQUIRE(output.find(".SH SEE ALSO") != std::string::npos);
+  REQUIRE(output.find("mytool-build") != std::string::npos);
+  REQUIRE(output.find("mytool-stash") != std::string::npos);
+}
+
+TEST_CASE(
+  "to_groff root without subcommands has no auto SEE ALSO",
+  "[manpage][see_also]") {
+  model::Root root{};
+  root.name = "simple";
+  root.doc = {"A tool without subcommands."};
+  auto output = to_groff(root);
+  REQUIRE(output.find("SEE ALSO") == std::string::npos);
+}
+
+TEST_CASE(
+  "to_groff subcommand auto-generates SEE ALSO referencing root",
+  "[manpage][see_also]") {
+  auto root = make_test_root();
+  auto output = to_groff(root, {"build"});
+  REQUIRE(output.find(".SH SEE ALSO") != std::string::npos);
+  REQUIRE(output.find("\\fBmytool\\fR(1)") != std::string::npos);
+}
+
+TEST_CASE(
+  "to_groff nested subcommand SEE ALSO references root",
+  "[manpage][see_also]") {
+  auto root = make_test_root();
+  auto output = to_groff(root, {"stash", "push"});
+  REQUIRE(output.find(".SH SEE ALSO") != std::string::npos);
+  REQUIRE(output.find("\\fBmytool\\fR(1)") != std::string::npos);
+}
+
+TEST_CASE(
+  "to_groff root merges auto xrefs with user-specified xrefs",
+  "[manpage][see_also]") {
+  auto root = make_test_root();
+  root.man = model::Man{};
+  root.man->xrefs = std::vector<model::ManXref>{{"other-tool", 1}};
+  auto output = to_groff(root);
+  REQUIRE(output.find("other-tool") != std::string::npos);
+  REQUIRE(output.find("mytool-build") != std::string::npos);
+  REQUIRE(output.find("mytool-stash") != std::string::npos);
+}
+
+TEST_CASE(
+  "to_plain_text root with subcommands includes SEE ALSO",
+  "[manpage][see_also]") {
+  auto root = make_test_root();
+  auto output = to_plain_text(root);
+  REQUIRE(output.find("SEE ALSO") != std::string::npos);
+  REQUIRE(output.find("mytool-build") != std::string::npos);
+  REQUIRE(output.find("mytool-stash") != std::string::npos);
+}
+
+TEST_CASE(
+  "to_plain_text subcommand SEE ALSO references root", "[manpage][see_also]") {
+  auto root = make_test_root();
+  auto output = to_plain_text(root, {"build"});
+  REQUIRE(output.find("SEE ALSO") != std::string::npos);
+  REQUIRE(output.find("mytool(1)") != std::string::npos);
+}
+
+TEST_CASE(
+  "to_ansi_text root with subcommands includes SEE ALSO",
+  "[manpage][see_also]") {
+  auto root = make_test_root();
+  auto output = to_ansi_text(root);
+  REQUIRE(output.find("SEE ALSO") != std::string::npos);
+  REQUIRE(output.find("mytool-build") != std::string::npos);
+  REQUIRE(output.find("mytool-stash") != std::string::npos);
+}
+
+TEST_CASE(
+  "to_ansi_text subcommand SEE ALSO references root", "[manpage][see_also]") {
+  auto root = make_test_root();
+  auto output = to_ansi_text(root, {"build"});
+  REQUIRE(output.find("SEE ALSO") != std::string::npos);
+  REQUIRE(output.find("\033[1mmytool\033[0m(1)") != std::string::npos);
+}
