@@ -8,9 +8,7 @@ configure_file(json_commander_schema.hpp.in
 add_executable(json-commander json_commander.cpp)
 target_link_libraries(json-commander PRIVATE
   json_commander::header
-  json_commander::library
-  nlohmann_json::nlohmann_json
-  nlohmann_json_schema_validator)
+  json_commander::library)
 target_include_directories(json-commander PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 set_target_properties(json-commander PROPERTIES
   CXX_STANDARD ${json_commander_CXX_STANDARD})

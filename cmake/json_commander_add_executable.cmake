@@ -94,12 +94,10 @@ function(json_commander_add_executable name)
   # Create the executable (forward unparsed args as additional sources)
   add_executable(${name} ${_exe_flags} ${_generated_main} ${JCMD_UNPARSED_ARGUMENTS})
 
-  # Link json-commander dependencies
+  # Link json-commander (transitive deps propagated via INTERFACE)
   target_link_libraries(${name} PRIVATE
     json_commander::header
-    json_commander::library
-    nlohmann_json::nlohmann_json
-    nlohmann_json_schema_validator)
+    json_commander::library)
 
   # C++ standard
   set_target_properties(${name} PROPERTIES
