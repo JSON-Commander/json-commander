@@ -15,9 +15,7 @@ target_include_directories(json_commander_c
   $<INSTALL_INTERFACE:${json_commander_INSTALL_INCLUDEDIR}>)
 target_link_libraries(json_commander_c PRIVATE
   json_commander::header
-  json_commander::library
-  nlohmann_json::nlohmann_json
-  nlohmann_json_schema_validator)
+  json_commander::library)
 
 add_library(json_commander::c ALIAS json_commander_c)
 

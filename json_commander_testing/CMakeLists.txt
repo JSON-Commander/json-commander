@@ -7,8 +7,6 @@ macro(json_commander_add_test test_name)
   target_link_libraries(${exe_name} PRIVATE
     json_commander::header
     json_commander::library
-    nlohmann_json::nlohmann_json
-    nlohmann_json_schema_validator
     Catch2::Catch2WithMain)
   set_target_properties(${exe_name}
     PROPERTIES

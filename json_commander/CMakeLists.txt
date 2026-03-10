@@ -14,6 +14,10 @@ target_include_directories(json_commander_header
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
   $<INSTALL_INTERFACE:${json_commander_INSTALL_INCLUDEDIR}>)
+target_link_libraries(json_commander_header
+  INTERFACE
+  nlohmann_json::nlohmann_json
+  nlohmann_json_schema_validator)
 
 add_library(json_commander::header ALIAS json_commander_header)
 
