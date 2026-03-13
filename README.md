@@ -34,9 +34,118 @@ output.
 
 ## Quick Start
 
-Define your CLI as a `model::Root` and call `json_commander::run()` -- it
-handles argument parsing, `--help`, `--version`, and `--man` dispatch
-automatically:
+### CMake Executable Helper (Easiest)
+
+The fastest way to build a CLI with JSON-Commander: write a JSON schema, write
+a callback function, and add three lines of CMake. No `main()` boilerplate
+needed.
+
+**1. Define your CLI as a JSON schema** (`greet.json`):
+
+```json
+{
+  "name": "greet",
+  "doc": ["A friendly greeting tool."],
+  "version": "1.0.0",
+  "args": [
+    {
+      "kind": "flag",
+      "names": ["loud", "l"],
+      "doc": ["Print the greeting in uppercase."]
+    },
+    {
+      "kind": "positional",
+      "name": "name",
+      "doc": ["The name to greet."],
+      "type": "string",
+      "required": true
+    }
+  ]
+}
+```
+
+**2. Write your callback** (`greet_main.hpp`):
+
+```cpp
+#pragma once
+#include <nlohmann/json.hpp>
+#include <algorithm>
+#include <cctype>
+#include <iostream>
+#include <string>
+
+namespace greet {
+int run(const nlohmann::json &config) {
+  std::string greeting = "Hello, " + config["name"].get<std::string>() + "!";
+  if (config["loud"].get<bool>()) {
+    std::transform(greeting.begin(), greeting.end(), greeting.begin(), [](unsigned char c) {
+      return static_cast<char>(std::toupper(c));
+    });
+  }
+  std::cout << greeting << "\n";
+  return 0;
+}
+} // namespace greet
+```
+
+**3. Add to CMake** (`CMakeLists.txt`):
+
+```cmake
+find_package(json-commander REQUIRED)
+
+json_commander_add_executable(greet
+  SCHEMA greet.json
+  MAIN greet::run
+  FROM_HEADER greet_main.hpp)
+```
+
+That's it -- JSON-Commander generates `main()`, handles `--help`, `--version`,
+and `--man` automatically.
+
+**Parameters:**
+
+| Parameter     | Required | Description                                                                         |
+|---------------|----------|-------------------------------------------------------------------------------------|
+| `SCHEMA`      | yes      | Path to the JSON schema file (relative to `CMAKE_CURRENT_SOURCE_DIR`)               |
+| `MAIN`        | yes      | Fully-qualified name of the callback function (`int(const nlohmann::json&)`)        |
+| `FROM_HEADER` | no       | Header file to `#include` for the callback; omit if the function is already visible |
+
+Additional source files can be passed as unnamed arguments after the keyword
+parameters.
+
+The function is available after `find_package(json-commander)` or when
+building as a subdirectory.
+
+### JSON Schema + `run_file()` (Runtime Loading)
+
+Load a JSON schema at runtime with `json_commander::run_file()`. This gives
+you full control over `main()` while still using a declarative JSON definition:
+
+```cpp
+#include <json_commander/run.hpp>
+
+#include <algorithm>
+#include <cctype>
+#include <iostream>
+#include <string>
+
+int main(int argc, char *argv[]) {
+  return json_commander::run_file("greet.json", argc, argv, [](const nlohmann::json &config) {
+    std::string greeting = "Hello, " + config["name"].get<std::string>() + "!";
+    if (config["loud"].get<bool>()) {
+      std::transform(greeting.begin(), greeting.end(), greeting.begin(), [](unsigned char c) {
+        return static_cast<char>(std::toupper(c));
+      });
+    }
+    std::cout << greeting << "\n";
+    return 0;
+  });
+}
+```
+
+### Programmatic C++ Model
+
+For maximum flexibility, define your CLI programmatically as a `model::Root`:
 
 ```cpp
 #include <json_commander/run.hpp>
@@ -81,31 +190,6 @@ int main(int argc, char *argv[]) {
 }
 ```
 
-CLIs can also be defined as JSON files and loaded at runtime via
-`schema::Loader`:
-
-```json
-{
-  "name": "greet",
-  "doc": ["A friendly greeting tool."],
-  "version": "1.0.0",
-  "args": [
-    {
-      "kind": "flag",
-      "names": ["loud", "l"],
-      "doc": ["Print the greeting in uppercase."]
-    },
-    {
-      "kind": "positional",
-      "name": "name",
-      "doc": ["The name to greet."],
-      "type": "string",
-      "required": true
-    }
-  ]
-}
-```
-
 ### C API
 
 JSON-Commander also provides a C shared library with a single-function
@@ -126,34 +210,6 @@ int main(int argc, char *argv[]) {
   return jcmd_run(schema, argc, argv, greet_main);
 }
 ```
-
-## CMake Executable Helper
-
-`json_commander_add_executable` is a CMake function that generates a complete
-CLI executable from a JSON schema and a callback function. It creates the
-`main()` boilerplate, links all required dependencies, and bakes the schema
-path into the binary as a compile definition.
-
-```cmake
-json_commander_add_executable(serve
-  SCHEMA serve.json
-  MAIN serve::run
-  FROM_HEADER serve_main.hpp)
-```
-
-**Parameters:**
-
-| Parameter     | Required | Description                                                                         |
-|---------------|----------|-------------------------------------------------------------------------------------|
-| `SCHEMA`      | yes      | Path to the JSON schema file (relative to `CMAKE_CURRENT_SOURCE_DIR`)               |
-| `MAIN`        | yes      | Fully-qualified name of the callback function (`int(const nlohmann::json&)`)        |
-| `FROM_HEADER` | no       | Header file to `#include` for the callback; omit if the function is already visible |
-
-Additional source files can be passed as unnamed arguments after the keyword
-parameters.
-
-The function is available after `find_package(json-commander)` or when
-building as a subdirectory.
 
 ## JSON-Commander CLI Tool
 
