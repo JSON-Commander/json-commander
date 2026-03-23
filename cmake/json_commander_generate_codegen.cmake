@@ -21,6 +21,9 @@ if(NOT JCMD_FUNCTION_NAME)
   set(JCMD_FUNCTION_NAME "jcmd_make_root")
 endif()
 
+cmake_path(GET JCMD_OUTPUT_FILE PARENT_PATH _output_dir)
+file(MAKE_DIRECTORY "${_output_dir}")
+
 execute_process(
   COMMAND "${JCMD_EXECUTABLE}" codegen "${JCMD_SCHEMA_FILE}"
     --function-name "${JCMD_FUNCTION_NAME}"
